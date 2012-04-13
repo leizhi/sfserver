@@ -4,83 +4,131 @@
               To include a user specific buildfile here, simply create one in the same
               directory with the processing instruction <?eclipse.ant.import?>
               as the first entry and export the buildfile again. -->
-<project basedir="." default="build" name="socket">  
-	<property name="project-name" value="socket"/> <!-- ====此处需要修改====.jar文件名 -->    
-	<property name="lib" value="lib"/> <!-- lib-->    
-	<property name="src" value="src"/> <!-- src-->    
-	<property name="tar" value="classes"/> <!-- classes -->    
-	<property name="jar-file-name" value="${project-name}.jar"/>
-	<property name="main-class" value="com.khnt.socket.Server"/> <!-- ====此处需要修改====main-class-->
+<project basedir="." default="build" name="sfserver">
+	<property name="project.dir" value="." />
+
+	<property name="src.dir" value="src" />
+	<property name="lib.dir" value="lib" /> 
 	
-    <property environment="env"/>
-    <property name="ECLIPSE_HOME" value="../../eclipse"/>
-    <property name="debuglevel" value="source,lines,vars"/>
-    <property name="target" value="1.5"/>
-    <property name="source" value="1.5"/>
-    <path id="socket.classpath">
-        <pathelement location="classes"/>
-        <pathelement location="lib/classes12.jar"/>
-        <pathelement location="lib/commons-logging-1.0.4.jar"/>
-        <pathelement location="lib/commons-logging-api-1.1.jar"/>
-        <pathelement location="lib/log4j-1.2.14.jar"/>
-        <pathelement location="lib/mysql-connector-java-5.1.10-bin.jar"/>
-    	<pathelement location="lib/jaxen-1.1.1.jar"/>
-    </path>
-    <target name="init">
-        <mkdir dir="classes"/>
-        <copy includeemptydirs="false" todir="classes">
-            <fileset dir="src">
-                <exclude name="**/*.launch"/>
-                <exclude name="**/*.java"/>
-            </fileset>
-        </copy>
-    </target>
+	<property name="build.dir" value="build" />
+	<property name="dist.dir" value="dist" />
 	
-	<target name="run">    
-		<java jar="${jar-file-name}" fork="true" maxmemory="256m"/>    
+	<property name="jar-file-name" value="${ant.project.name}.jar"/>
+	<property name="main-class" value="com.mooo.mycoz.sfwine.SFServer"/> <!-- main-class 入口类-->
+
+	<property environment="env"/><!-- 访问环境变量 -->
+	<property name="ant.home" value="${env.ANT_HOME}"/>
+	
+	<!-- 初始化 classpath -->
+	<path id="project.classpath">
+		<fileset dir="${project.dir}/${lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+
+		<pathelement location="${build.dir}/classes" />
+		<pathelement path="${java.class.path}" />
+	</path>
+	
+	<!-- 删除之前的目录结构 -->
+	<target name="clean">
+		<delete dir="${build.dir}" />
+		<delete dir="${dist.dir}" />
+	</target>
+
+	<!-- 创建化目录结构 -->
+	<target name="init">
+		<mkdir dir="${build.dir}/classes" />
+		<mkdir dir="${dist.dir}" />
 	</target>
 	
+	<!-- 编译Java代码 -->
+	<target name="compile" depends="init" description="compile java source">
+		
+		<javac srcdir="${src.dir}" destdir="${build.dir}/classes" encoding="utf-8" includeantruntime="on">
+			<classpath refid="project.classpath" />
+		</javac>
+
+		<copy todir="${build.dir}/classes">
+			<fileset dir="${src.dir}">
+				<include name="**/*.xml" />
+				<include name="**/*.dtd" />
+				<include name="**/*.properties" />
+			</fileset>
+		</copy>
+	</target>
+	
+	<!-- 默认设置编译代码  -->
+    <target name="build" depends="compile">
+		<echo message="${ant.home}"/>
+    </target>
+	
+	<!-- 文档编译  -->
+	<target name="doc" depends="compile" description="Create Javadoc API documentation">
+		<mkdir dir="${dist.dir}/docs/api" />
+		<javadoc sourcepath="${src.dir}" charset="utf-8"  encoding="utf-8" destdir="${dist.dir}/docs/api">
+			<classpath refid="compile.classpath" />
+		</javadoc>
+		<echo>javadoc is complete!</echo>
+	</target>
+	
+	<!-- 打包JAR  -->
+	<!-- 解压第3方包  -->
 	<target name="unziplib">
-		<unjar dest="classes">
-	    	<fileset dir="${lib}" includes="*.jar" />
+		<unjar dest="${build.dir}/classes">
+	    	<fileset dir="${lib.dir}" includes="*.jar" />
 	    </unjar>
 	</target>
-
-	<target name="jar">    
-		<jar basedir="${tar}" destfile="${jar-file-name}">    
-			<manifest>    
-				<attribute name="Main-Class" value="${main-class}"/>    
-				<attribute name="Class-Path" value=""/>    
-			</manifest>
-		</jar>
-	</target> 
 	
-    <target name="clean">
-        <delete dir="classes"/>
-    </target>
-    <target depends="clean" name="cleanall"/>
-    <target depends="build-subprojects,build-project" name="build"/>
-    <target name="build-subprojects"/>
-    <target depends="init" name="build-project">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="classes" source="${source}" target="${target}">
-            <src path="src"/>
-            <classpath refid="socket.classpath"/>
-        </javac>
-    </target>
-    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
-    <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
-        <copy todir="${ant.library.dir}">
-            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
-        </copy>
-        <unzip dest="${ant.library.dir}">
-            <patternset includes="jdtCompilerAdapter.jar"/>
-            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
-        </unzip>
-    </target>
-    <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
-        <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
-        <antcall target="build"/>
-    </target>
+	<!-- 把所有目标文件打包  -->
+<!--
+	<target name="jar" depends="unziplib,compile">
+		<echo message="${ant.project.name}: ${ant.file}"/>
+		
+		<jar basedir="${build.dir}/classes" destfile="${dist.dir}/${jar-file-name}">    
+			<manifest>
+				<attribute name="Main-Class" value="${main-class}"/>
+				<attribute name="Class-Path" value=""/>
+			</manifest>
+			
+			<fileset dir="${build.dir}/classes">
+				<include name="**/*.class"/>
+			</fileset>
+		</jar>
+	</target>
+-->
+	<!-- 分离第3方包打包-->
+	<target name="copylib">
+		<copy todir="${dist.dir}">
+			<fileset dir="${lib.dir}">
+				<include name="**/*.jar" />
+			</fileset>
+		</copy>
+	</target>
+	<target name="jar" depends="compile,copylib">
+		<echo message="${ant.project.name}: ${ant.file}"/>
 
+		<pathconvert property="mf.classpath" pathsep=" ">
+			<path refid="project.classpath" />
+			<flattenmapper />
+		</pathconvert>
+
+		<jar basedir="${build.dir}/classes" destfile="${dist.dir}/${jar-file-name}">    
+			<manifest>
+				<attribute name="Main-Class" value="${main-class}"/>
+				<attribute name="Class-Path" value="${mf.classpath}"/>
+			</manifest>
+
+			<fileset dir="${build.dir}/classes">
+				<include name="**/*.class"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<!-- 运行发布包 -->
+	<target name="run" depends="jar">    
+		<java jar="${dist.dir}/${jar-file-name}" fork="true" maxmemory="256m">
+			<jvmarg value="-XX:+HeapDumpOnOutOfMemoryError" />
+		</java>
+	</target>
+	
 </project>
