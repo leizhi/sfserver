@@ -114,7 +114,7 @@ public class SFServer extends ServerSocket {
 					否则结束循环
 				 *
 				 */
-				while (!(message = read.readLine()).equals("exit")){
+				while (!(message = read.readLine()).equals("close")){
 					//返回打印数据
 					print.println("response :" + message);
 
