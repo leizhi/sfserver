@@ -8,7 +8,7 @@ public interface Action {
 	
 	public final static byte SEARCH_CARD = 0x02;
 	
-	public final static byte ACTION_EXIT = (byte) 0xEE;
+	public final static byte ACTION_EXIT = 0x03;
 	
     
 	MessageReturn forward(String request);

@@ -104,9 +104,10 @@ public class SFServer extends ServerSocket {
 
 		public void run() {
 			try {
-				String message = "--- Welcome to this chatroom 欢迎---";
-				print.println(message);
-				print.print(">");
+//				String message = "--- Welcome to this chatroom 欢迎---";
+//				print.println(message);
+//				print.print(">");
+				String message=null;
 				/*
 				 * 这里循环可以使服务器持续的接收客户端信息。
 					read.readLine()通过输入流读取一段字符串，
@@ -114,12 +115,12 @@ public class SFServer extends ServerSocket {
 					否则结束循环
 				 *
 				 */
-				while (!(message = read.readLine()).equals("close")){
+				while (!(message = read.readLine()).equals("3")){
 					//返回打印数据
-					print.println("response :" + message);
+					//print.println("response :" + message);
 
-					if(message.equals("exit"))
-					message="exit +\n*"+userId;
+					if(message.equals("3"))
+					message="3 \n*"+userId;
 					
 					MessageReturn msgr=ActionFactory.getInstance().forward(message);
 					print.println("response :"+msgr.getFlag()+","+msgr.getMessage());
@@ -132,16 +133,17 @@ public class SFServer extends ServerSocket {
 						}
 					}
 					//wait input
-					print.print(">");
+					//print.print(">");
 				}//end while
 				
 			} catch (Exception e) {
-				String message="exit +\n*"+userId;
-				ActionFactory.getInstance().forward(message);
 				e.printStackTrace();
 				System.out.println("客户失去连接...");
 			} finally {
 				try {
+					String message="3 "+userId;
+					ActionFactory.getInstance().forward(message);
+					System.out.println("客户退出...");
 					if( in !=null)
 						in.close();
 					if( out !=null)
