@@ -90,8 +90,6 @@ public class SFServer extends ServerSocket {
 		private PrintStream print = null; 
 		private Integer userId=0;
 		
-//		private OutputStreamWriter outputStreamWriter = null;
-		
 		public SessionThread(Socket socket) throws IOException {
 			this.socket = socket;
 
@@ -99,19 +97,16 @@ public class SFServer extends ServerSocket {
 			out = socket.getOutputStream();
 
 			// 从Socket中获取输入流和输出流，由于我们只做一个简单的字符串通讯，所以采用BufferedRead和PrintStream来封装输入、输出流   
-			read = new BufferedReader(new InputStreamReader(socket.getInputStream()));  
-			print = new PrintStream(socket.getOutputStream());
-			
-//			outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
+			read = new BufferedReader(new InputStreamReader(socket.getInputStream(),"GBK"));  
+//			print = new PrintStream(socket.getOutputStream());
+			print = new PrintStream(socket.getOutputStream(),true,"GBK");
 		}
 
 		public void run() {
 			try {
 				String message = "--- Welcome to this chatroom 欢迎---";
-				print.println(new String(message.getBytes(),"GBK"));
-				message = "input your nickname>";
-				print.print(message);
-				
+				print.println(message);
+				print.print(">");
 				/*
 				 * 这里循环可以使服务器持续的接收客户端信息。
 					read.readLine()通过输入流读取一段字符串，
@@ -121,13 +116,14 @@ public class SFServer extends ServerSocket {
 				 */
 				while (!(message = read.readLine()).equals("exit")){
 					//返回打印数据
-					print.println("response is:" + message);
-					print.print(">");
+					print.println("response :" + message);
+
 					if(message.equals("exit"))
 					message="exit +\n*"+userId;
 					
 					MessageReturn msgr=ActionFactory.getInstance().forward(message);
-					print.print(msgr.getFlag()+","+msgr.getMessage());
+					print.println("response :"+msgr.getFlag()+","+msgr.getMessage());
+					
 					//处理登陆操作的用户ID 
 					if(msgr.getFlag()){
 						String[] str=msgr.getMessage().split(",");
@@ -135,8 +131,8 @@ public class SFServer extends ServerSocket {
 							userId=Integer.parseInt(str[0]);
 						}
 					}
-//					outputStreamWriter.write(message);
-//					outputStreamWriter.flush();
+					//wait input
+					print.print(">");
 				}//end while
 				
 			} catch (Exception e) {
