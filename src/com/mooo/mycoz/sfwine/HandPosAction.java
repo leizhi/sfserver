@@ -4,12 +4,11 @@ public class HandPosAction implements Action{
 
 	
 	public MessageReturn forward(String request) {
-//		line = "1      leizhi     leizhi    \n";
 		PosImpl pos=new PosImpl();
 		MessageReturn msg=new MessageReturn();
 		String[] args = request.split(" +\n*");
 		
-		if(args==null || args.length <1 || args[0].length()>1){
+		if(args==null || args.length <1 || args[0].length()!=1){
 			msg.setFlag(false);
 			msg.setMessage("没有输入参数");
 			return msg;

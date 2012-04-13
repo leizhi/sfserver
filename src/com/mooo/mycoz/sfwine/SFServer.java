@@ -108,7 +108,7 @@ public class SFServer extends ServerSocket {
 		public void run() {
 			try {
 				String message = "--- Welcome to this chatroom 欢迎---";
-				print.println(message);
+				print.println(new String(message.getBytes(),"GBK"));
 				message = "input your nickname>";
 				print.print(message);
 				
