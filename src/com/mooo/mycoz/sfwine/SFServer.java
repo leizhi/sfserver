@@ -115,15 +115,16 @@ public class SFServer extends ServerSocket {
 					否则结束循环
 				 *
 				 */
-				while (!(message = read.readLine()).equals("3")){
+				//while (!(message = read.readLine()).equals("3")){
+				while (!(message = read.readLine().trim()).equals("3")){
 					//返回打印数据
-					//print.println("response :" + message);
+//					print.println("response :" + message);
 
-					if(message.equals("3"))
-					message="3 \n*"+userId;
+					if(message.equals("*3#"))
+					message="*3"+userId+"#";
 					
 					MessageReturn msgr=ActionFactory.getInstance().forward(message);
-					print.println("response :"+msgr.getFlag()+","+msgr.getMessage());
+					print.println(msgr.getFlag()+","+msgr.getMessage());
 					
 					//处理登陆操作的用户ID 
 					if(msgr.getFlag()){
@@ -137,11 +138,13 @@ public class SFServer extends ServerSocket {
 				}//end while
 				
 			} catch (Exception e) {
+				String message="*3"+userId+"#";
+				ActionFactory.getInstance().forward(message);
 				e.printStackTrace();
 				System.out.println("客户失去连接...");
 			} finally {
 				try {
-					String message="3 "+userId;
+					String message="*3"+userId+"#";
 					ActionFactory.getInstance().forward(message);
 					System.out.println("客户退出...");
 					if( in !=null)
