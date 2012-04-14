@@ -7,9 +7,9 @@
 		
 		You CAN specify the layout here 
 	-->
-    <appender name="dbLog" class="org.apache.log4j.RollingFileAppender">
+    <appender name="sfserverLog" class="org.apache.log4j.RollingFileAppender">
             <param name="MaxFileSize" value="2000KB"/>
-            <param name="File" value="dbLog.log"/>
+            <param name="File" value="sfserverLo.log"/>
             <param name="Append" value="true"/>
             <layout class="org.apache.log4j.PatternLayout">
                     <param name="ConversionPattern" value="%d %-5p [%t] %C{2} (%l) - %m\n"/>
@@ -24,9 +24,9 @@
 	</appender>
 
     <!-- The root for struts -->
-    <category name="com.mooo.db" additivity="false">
+    <category name="com.mooo.mycoz.sfwine" additivity="false">
         <priority value="debug"/>
-        <appender-ref ref="dbLog"/>
+        <appender-ref ref="sfserverLog"/>
     </category>
 
 	<!-- the one and only root category -->
