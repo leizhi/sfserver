@@ -97,9 +97,9 @@ public class SFServer extends ServerSocket {
 			out = socket.getOutputStream();
 
 			// 从Socket中获取输入流和输出流，由于我们只做一个简单的字符串通讯，所以采用BufferedRead和PrintStream来封装输入、输出流   
-			read = new BufferedReader(new InputStreamReader(socket.getInputStream(),"GBK"));  
+			read = new BufferedReader(new InputStreamReader(in,"GBK"));  
 //			print = new PrintStream(socket.getOutputStream());
-			print = new PrintStream(socket.getOutputStream(),true,"GBK");
+			print = new PrintStream(out,true,"GBK");
 		}
 
 		public void run() {
@@ -133,6 +133,7 @@ public class SFServer extends ServerSocket {
 							userId=Integer.parseInt(str[0]);
 						}
 					}
+					socket.sendUrgentData(0);
 					//wait input
 					//print.print(">");
 				}//end while
