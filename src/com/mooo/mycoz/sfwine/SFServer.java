@@ -80,7 +80,9 @@ public class SFServer extends ServerSocket {
 		
 	}
 
-	////////////////////////////////////////////////
+	/*
+	 * 访问子线程
+	 */
 	class SessionThread implements Runnable {
 		private Socket socket;
 		private OutputStream out;
@@ -96,9 +98,7 @@ public class SFServer extends ServerSocket {
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
 
-			// 从Socket中获取输入流和输出流，由于我们只做一个简单的字符串通讯，所以采用BufferedRead和PrintStream来封装输入、输出流   
 			read = new BufferedReader(new InputStreamReader(in,"GBK"));  
-//			print = new PrintStream(socket.getOutputStream());
 			print = new PrintStream(out,true,"GBK");
 		}
 
@@ -108,20 +108,21 @@ public class SFServer extends ServerSocket {
 //				print.println(message);
 //				print.print(">");
 				String message=null;
-				/*
-				 * 这里循环可以使服务器持续的接收客户端信息。
-					read.readLine()通过输入流读取一段字符串，
-					赋值给message变量，如果message字符串不为“exit”则循环，
-					否则结束循环
-				 *
-				 */
-				//while (!(message = read.readLine()).equals("3")){
-				while (!(message = read.readLine().trim()).equals("3")){
+				
+				boolean forever = true;
+				while (forever){			
+					message = read.readLine();
+					
+					if(message==null || message.equals("3"))
+						break;
+					
+					message = message.trim();
+					
 					//返回打印数据
-//					print.println("response :" + message);
+					print.println("response :" + message);
 
 					if(message.equals("*3#"))
-					message="*3"+userId+"#";
+						message="*3"+userId+"#";
 					
 					MessageReturn msgr=ActionFactory.getInstance().forward(message);
 					print.println(msgr.getFlag()+","+msgr.getMessage());
@@ -133,7 +134,7 @@ public class SFServer extends ServerSocket {
 							userId=Integer.parseInt(str[0]);
 						}
 					}
-					socket.sendUrgentData(0);
+
 					//wait input
 					//print.print(">");
 				}//end while
@@ -148,6 +149,7 @@ public class SFServer extends ServerSocket {
 					String message="*3"+userId+"#";
 					ActionFactory.getInstance().forward(message);
 					System.out.println("客户退出...");
+					
 					if( in !=null)
 						in.close();
 					if( out !=null)
