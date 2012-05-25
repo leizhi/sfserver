@@ -90,7 +90,7 @@ public class SFServer extends ServerSocket {
 
 		private BufferedReader read = null;  
 		private PrintStream print = null; 
-		private Integer userId=0;
+//		private Integer userId=0;
 		
 		public SessionThread(Socket socket) throws IOException {
 			this.socket = socket;
@@ -119,25 +119,22 @@ public class SFServer extends ServerSocket {
 					requestLine = requestLine.trim();
 					
 					//打印请求数据
-					print.println("requestLine :" + requestLine);
+//					print.println("requestLine :" + requestLine);
 					
 					String response = ActionFactory.getInstance().forward(requestLine);
 					//打印响应数据
-					print.println("response :" + response);
-					
+//					print.println("response :" + response);
+					print.println(response);
+
 					//wait input
 					//print.print(">");
 				}//end while
 				
 			} catch (Exception e) {
-				String message="*3"+userId+"#";
-				ActionFactory.getInstance().forward(message);
 				e.printStackTrace();
 				System.out.println("客户失去连接...");
 			} finally {
 				try {
-					String message="*3"+userId+"#";
-					ActionFactory.getInstance().forward(message);
 					System.out.println("客户退出...");
 					
 					if( in !=null)
