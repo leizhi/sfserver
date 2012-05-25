@@ -44,7 +44,7 @@ public class IDGenerator {
 		return nextId;
 	}
 	
-	public int getId(String table,String fieldName,String fieldValue){
+	public static int getId(String table,String fieldName,String fieldValue){
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		int id = 0;
@@ -77,7 +77,7 @@ public class IDGenerator {
 		
 		return id;
 	}
-	public boolean find(String table,String fieldName,String fieldValue){
+	public static boolean find(String table,String fieldName,String fieldValue){
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		int count = 0;
