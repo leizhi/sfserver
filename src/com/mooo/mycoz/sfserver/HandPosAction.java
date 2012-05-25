@@ -38,6 +38,7 @@ public class HandPosAction implements Action {
         try {
     		if(log.isDebugEnabled()) log.debug("processLogin getName:"+userName);	
     		if(log.isDebugEnabled()) log.debug("processLogin getPassword:"+password);	
+    		Integer userId = null;
 
     		if(StringUtils.isNull(userName)){
     			throw new NullPointerException("请输入用户名");
@@ -66,9 +67,7 @@ public class HandPosAction implements Action {
 
             rs = pstmt.executeQuery();
             while (rs.next()) {
-            	rs.getInt(1);
-            	rs.getString(2);
-            	rs.getInt(3);
+            	userId=rs.getInt(1);
 
             	count=1;
             }
@@ -79,7 +78,7 @@ public class HandPosAction implements Action {
     			throw new NullPointerException("用户和密码不匹配");
             }
             
-    		response +="0";
+    		response +="0,"+Action.PROCESS_LOGIN+","+userId;
 		}catch (NullPointerException e) {
 			response +="-1,"+e.getMessage();
 			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
@@ -138,7 +137,8 @@ public class HandPosAction implements Action {
 			
 			conn.commit();
 			
-    		response +="0,"+str;
+    		response +="0,"+Action.SEARCH_CARD+","+str;
+
 			if(log.isDebugEnabled()) log.debug("save finlsh");
 		} catch (Exception e) {
 			response +="-1,"+e.getMessage();
@@ -174,7 +174,7 @@ public class HandPosAction implements Action {
 		return cardPatrol(cardId,new Integer(userId) );
 	}
 	
-	public String forward(String requestLine) {
+	public String forward(String requestLine,Integer userId) {
 //		String[] args = request.split(" +\n*");
 		String response = null;
 
@@ -206,11 +206,13 @@ public class HandPosAction implements Action {
 					response = processLogin(args[1], args[2]);
 					break;
 				case Action.SEARCH_CARD:
-					if(args.length !=3){
+					if(args.length !=2){
 						response = "参数不正确";
 				    }
-					
-					response = cardPatrol(args[1],args[2]);
+					if(userId!=null)
+						response = cardPatrol(args[1],userId);
+					else
+						response = "未登录";
 					
 					break;
 				default:

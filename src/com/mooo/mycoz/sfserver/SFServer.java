@@ -90,7 +90,6 @@ public class SFServer extends ServerSocket {
 
 		private BufferedReader read = null;  
 		private PrintStream print = null; 
-//		private Integer userId=0;
 		
 		public SessionThread(Socket socket) throws IOException {
 			this.socket = socket;
@@ -103,6 +102,8 @@ public class SFServer extends ServerSocket {
 		}
 
 		public void run() {
+			Integer userId=null;
+
 			try {
 //				String message = "--- Welcome to this chatroom 欢迎---";
 //				print.println(message);
@@ -121,11 +122,20 @@ public class SFServer extends ServerSocket {
 					//打印请求数据
 //					print.println("requestLine :" + requestLine);
 					
-					String response = ActionFactory.getInstance().forward(requestLine);
+					String response = ActionFactory.getInstance().forward(requestLine,userId);
 					//打印响应数据
 //					print.println("response :" + response);
 					print.println(response);
-
+					
+					String value=null;
+					String split = "*0,"+Action.PROCESS_LOGIN+",";
+					if(response.indexOf(split)>-1){
+						value = response.substring(split.length(),response.length()-1);
+						System.out.println("value:"+value);
+						if(value!=null && !value.equals("")){
+							userId=new Integer(value);
+						}
+					}
 					//wait input
 					//print.print(">");
 				}//end while

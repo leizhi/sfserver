@@ -8,5 +8,5 @@ public interface Action {
 
 	public final static byte ACTION_EXIT = 0x03;
 
-	String forward(String request);
+	String forward(String request,Integer userId);
 }
