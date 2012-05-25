@@ -1,4 +1,4 @@
-package com.mooo.mycoz.sfwine;
+package com.mooo.mycoz.test;
 
 import java.io.IOException;
 import java.io.InputStream;

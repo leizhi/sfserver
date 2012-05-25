@@ -1,4 +1,4 @@
-package com.mooo.mycoz.sfwine;
+package com.mooo.mycoz.sfserver;
 
 import com.mooo.mycoz.db.DbConfig;
 

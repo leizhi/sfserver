@@ -1,4 +1,4 @@
-package com.mooo.mycoz.sfwine;
+package com.mooo.mycoz.sfserver;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -107,34 +107,24 @@ public class SFServer extends ServerSocket {
 //				String message = "--- Welcome to this chatroom 欢迎---";
 //				print.println(message);
 //				print.print(">");
-				String message=null;
+				String requestLine=null;
 				
 				boolean forever = true;
 				while (forever){			
-					message = read.readLine();
+					requestLine = read.readLine();
 					
-					if(message==null || message.equals("3"))
+					if(requestLine==null || requestLine.equals("3")|| requestLine.equals("*3#"))
 						break;
 					
-					message = message.trim();
+					requestLine = requestLine.trim();
 					
-					//返回打印数据
-					print.println("response :" + message);
-
-					if(message.equals("*3#"))
-						message="*3"+userId+"#";
+					//打印请求数据
+					print.println("requestLine :" + requestLine);
 					
-					MessageReturn msgr=ActionFactory.getInstance().forward(message);
-					print.println(msgr.getFlag()+","+msgr.getMessage());
+					String response = ActionFactory.getInstance().forward(requestLine);
+					//打印响应数据
+					print.println("response :" + response);
 					
-					//处理登陆操作的用户ID 
-					if(msgr.getFlag()){
-						String[] str=msgr.getMessage().split(",");
-						if(str.length==3){
-							userId=Integer.parseInt(str[0]);
-						}
-					}
-
 					//wait input
 					//print.print(">");
 				}//end while
