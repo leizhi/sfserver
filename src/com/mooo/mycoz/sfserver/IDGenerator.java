@@ -57,11 +57,11 @@ public class IDGenerator {
 		return nextId;
 	} // getNextID(String table)
 	
-	public static int getNextID(String table) {
+	public synchronized static int getNextID(String table) {
 		return getNextID(null,table);
 	}
 	
-	public static int getId(Connection connection,String table,String fieldName,String fieldValue){
+	public synchronized static int getId(Connection connection,String table,String fieldName,String fieldValue){
 		boolean notConn = false;
 		PreparedStatement pstmt = null;
 		int id = -1;
@@ -101,11 +101,11 @@ public class IDGenerator {
 		return id;
 	}
 	
-	public static int getId(String table,String fieldName,String fieldValue){
+	public synchronized static int getId(String table,String fieldName,String fieldValue){
 		return getId( table, fieldName, fieldValue);
 	}
 	
-	public static boolean find(String table,String fieldName,String fieldValue){
+	public synchronized static boolean find(String table,String fieldName,String fieldValue){
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		int count = 0;
