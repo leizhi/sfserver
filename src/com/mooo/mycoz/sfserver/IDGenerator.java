@@ -13,45 +13,66 @@ public class IDGenerator {
 
 	private static final String SELECT_MAX_BY_TABLE="SELECT MAX(id) maxid FROM ";
 	
-	public static int getNextID(String table) {
-		
-		Connection connection=null;
+	public synchronized static int getNextID(Connection connection,String table) {
+		boolean notConn = false;
         PreparedStatement pstmt = null;
+        ResultSet result = null;
         int nextId=0;
         try {
-			connection = DbConnectionManager.getConnection();
-            pstmt = connection.prepareStatement(SELECT_MAX_BY_TABLE+table);
-            
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-            	nextId = rs.getInt("maxid");
-            }
-            
-            nextId ++;
+        	if(connection==null){
+        		notConn = true;
+        		DbConnectionManager.getConnection();
+        	}
+        	
+			pstmt = connection.prepareStatement(SELECT_MAX_BY_TABLE + table);
+			result = pstmt.executeQuery();
+			while (result.next()) {
+				nextId = result.getInt(1);
+			}
+
+			nextId++;
 		}catch (SQLException e) {
 			e.printStackTrace();
 	   }finally {
 			try {
+				if(result != null)
+					result.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+			try {
 				if(pstmt != null)
 					pstmt.close();
-				if(connection != null)
-					connection.close();
+				
+				if(notConn){
+					if(connection != null)
+						connection.close();
+				}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
 			
 		}
 		return nextId;
+	} // getNextID(String table)
+	
+	public static int getNextID(String table) {
+		return getNextID(null,table);
 	}
 	
-	public static int getId(String table,String fieldName,String fieldValue){
-		Connection conn = null;
+	public static int getId(Connection connection,String table,String fieldName,String fieldValue){
+		boolean notConn = false;
 		PreparedStatement pstmt = null;
 		int id = 0;
 		String sql = "SELECT id FROM "+table+" WHERE "+fieldName+"=?";
 		try{
-			conn = DbConnectionManager.getConnection();
-			pstmt = conn.prepareStatement(sql);
+        	if(connection==null){
+        		notConn = true;
+        		DbConnectionManager.getConnection();
+        	}
+        	
+			pstmt = connection.prepareStatement(sql);
 			pstmt.setString(1, fieldValue);
 			
 			ResultSet result = pstmt.executeQuery();
@@ -63,13 +84,13 @@ public class IDGenerator {
 		}finally{
 
 			try {
-				pstmt.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-
-			try {
-				conn.close();
+				if(pstmt != null)
+					pstmt.close();
+				
+				if(notConn){
+					if(connection != null)
+						connection.close();
+				}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -77,6 +98,11 @@ public class IDGenerator {
 		
 		return id;
 	}
+	
+	public static int getId(String table,String fieldName,String fieldValue){
+		return getId( table, fieldName, fieldValue);
+	}
+	
 	public static boolean find(String table,String fieldName,String fieldValue){
 		Connection conn = null;
 		PreparedStatement pstmt = null;

@@ -125,11 +125,11 @@ public class HandPosAction implements Action {
             }
             
 			pstmt = conn.prepareStatement(ADD_CARD_PATROL_LOG);
-			int cardJobId = IDGenerator.getNextID("CardJob");
+			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
 			pstmt.setInt(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(Calendar.getInstance().getTimeInMillis()));
 
-			int cardId = IDGenerator.getId("Card","rfidcode",rfidcode);
+			int cardId = IDGenerator.getId(conn,"Card","rfidcode",rfidcode);
 			pstmt.setInt(3, cardId);
 			
 			pstmt.setInt(4, userId);
