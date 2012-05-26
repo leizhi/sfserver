@@ -125,11 +125,16 @@ public class HandPosAction implements Action {
             }
             
 			pstmt = conn.prepareStatement(ADD_CARD_PATROL_LOG);
+			
 			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
+			System.out.println("cardJobId:"+cardJobId);
+
 			pstmt.setInt(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(Calendar.getInstance().getTimeInMillis()));
 
 			int cardId = IDGenerator.getId(conn,"Card","rfidcode",rfidcode);
+			System.out.println("cardId:"+cardId);
+
 			pstmt.setInt(3, cardId);
 			
 			pstmt.setInt(4, userId);
@@ -170,10 +175,6 @@ public class HandPosAction implements Action {
 		return response += "#";
 	}
 	
-	public String cardPatrol(String cardId,String userId){
-		return cardPatrol(cardId,new Integer(userId) );
-	}
-	
 	public String forward(String requestLine,Integer userId) {
 //		String[] args = request.split(" +\n*");
 		String response = null;
@@ -209,6 +210,7 @@ public class HandPosAction implements Action {
 					if(args.length !=2){
 						response = "参数不正确";
 				    }
+					
 					if(userId!=null)
 						response = cardPatrol(args[1],userId);
 					else
