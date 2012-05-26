@@ -64,7 +64,7 @@ public class IDGenerator {
 	public static int getId(Connection connection,String table,String fieldName,String fieldValue){
 		boolean notConn = false;
 		PreparedStatement pstmt = null;
-		int id = 0;
+		int id = -1;
 		String sql = "SELECT id FROM "+table+" WHERE "+fieldName+"=?";
 		try{
         	if(connection==null){

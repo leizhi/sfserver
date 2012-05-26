@@ -136,7 +136,10 @@ public class HandPosAction implements Action {
 
 			int cardId = IDGenerator.getId(conn,"Card","rfidcode",rfidcode);
 			System.out.println("cardId:"+cardId);
-
+			if(cardId<0){
+				throw new NullPointerException("无此卡记录"); 
+			}
+			
 			pstmt.setInt(3, cardId);
 			
 			pstmt.setInt(4, userId);
