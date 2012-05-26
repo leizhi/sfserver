@@ -131,6 +131,8 @@ public class HandPosAction implements Action {
 
 			pstmt.setInt(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(Calendar.getInstance().getTimeInMillis()));
+			
+			System.out.println("rfidcode:"+rfidcode);
 
 			int cardId = IDGenerator.getId(conn,"Card","rfidcode",rfidcode);
 			System.out.println("cardId:"+cardId);

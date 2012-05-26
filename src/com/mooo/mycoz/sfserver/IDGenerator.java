@@ -75,6 +75,8 @@ public class IDGenerator {
 			pstmt = connection.prepareStatement(sql);
 			pstmt.setString(1, fieldValue);
 			
+			System.out.println("sql:"+sql);
+
 			ResultSet result = pstmt.executeQuery();
 			if(result.next()){
 				id = result.getInt(1);
