@@ -21,7 +21,7 @@ public class IDGenerator {
         try {
         	if(connection==null){
         		notConn = true;
-        		DbConnectionManager.getConnection();
+        		connection=DbConnectionManager.getConnection();
         	}
         	
 			pstmt = connection.prepareStatement(SELECT_MAX_BY_TABLE + table);
