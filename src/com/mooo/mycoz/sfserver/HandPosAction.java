@@ -24,7 +24,9 @@ public class HandPosAction implements Action {
 
 	private static final String LOGIN="SELECT id,name,branchId FROM  User WHERE  name=? AND password=?";
 
-	private static final String EXISTS_CARD="SELECT COUNT(id) FROM Card WHERE rfidcode=?";
+	private static final String REGISTER_CARD="SELECT COUNT(id) FROM Card WHERE rfidcode=?";
+
+	private static final String EXISTS_CARD="SELECT COUNT(card.id) FROM Card card,WineJar wineJar WHERE wineJar.id=card.wineJarId AND rfidcode=?";
 
 	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
@@ -110,10 +112,22 @@ public class HandPosAction implements Action {
 			conn = DbConnectionManager.getConnection();
 			conn.setAutoCommit(false);
 			
-			pstmt = conn.prepareStatement(EXISTS_CARD);
+			pstmt = conn.prepareStatement(REGISTER_CARD);
 			pstmt.setString(1, rfidcode);
             ResultSet rs = pstmt.executeQuery();
             int count = 0;
+            while (rs.next()) {
+            	count = rs.getInt(1);
+            }
+            
+            if(count<1){
+            	throw new NullPointerException("此标签未授权"); 
+            }
+            
+			pstmt = conn.prepareStatement(EXISTS_CARD);
+			pstmt.setString(1, rfidcode);
+            rs = pstmt.executeQuery();
+            count = 0;
             while (rs.next()) {
             	count = rs.getInt(1);
             }
