@@ -24,7 +24,9 @@ public class HandPosAction implements Action {
 
 	private static final String LOGIN="SELECT id,name,branchId FROM  User WHERE  name=? AND password=?";
 
-	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material from Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
+	private static final String EXISTS_CARD="SELECT COUNT(id) FROM Card card WHERE rfidcode=?";
+
+	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
 	private static final String ADD_CARD_PATROL_LOG="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId) VALUES(?,?,?,?,3)";
 
@@ -108,10 +110,24 @@ public class HandPosAction implements Action {
 			conn = DbConnectionManager.getConnection();
 			conn.setAutoCommit(false);
 			
+			
+			
+			pstmt = conn.prepareStatement(EXISTS_CARD);
+			pstmt.setString(1, rfidcode);
+            ResultSet rs = pstmt.executeQuery();
+            int count = 0;
+            while (rs.next()) {
+            	count = rs.getInt(1);
+            }
+            
+            if(count<1){
+            	throw new NullPointerException("此标签未激活"); 
+            }
+            
 			pstmt = conn.prepareStatement(QUERY_CARD);
 			pstmt.setString(1, rfidcode);
 			
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             String str="";
             while (rs.next()) {
             	str += "标示号:"+rs.getString(1)+",";
