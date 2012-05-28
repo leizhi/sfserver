@@ -24,7 +24,7 @@ public class HandPosAction implements Action {
 
 	private static final String LOGIN="SELECT id,name,branchId FROM  User WHERE  name=? AND password=?";
 
-	private static final String EXISTS_CARD="SELECT COUNT(id) FROM Card card WHERE rfidcode=?";
+	private static final String EXISTS_CARD="SELECT COUNT(id) FROM Card WHERE rfidcode=?";
 
 	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
@@ -82,10 +82,10 @@ public class HandPosAction implements Action {
             
     		response +="0,"+Action.PROCESS_LOGIN+","+userId;
 		}catch (NullPointerException e) {
-			response +="-1,"+e.getMessage();
+			response +="1,"+e.getMessage();
 			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
 		}catch (SQLException e) {
-			response +="-2,"+e.getMessage();
+			response +="2,"+e.getMessage();
 			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
 	   }finally {
 			try {
@@ -109,8 +109,6 @@ public class HandPosAction implements Action {
 		try{
 			conn = DbConnectionManager.getConnection();
 			conn.setAutoCommit(false);
-			
-			
 			
 			pstmt = conn.prepareStatement(EXISTS_CARD);
 			pstmt.setString(1, rfidcode);
@@ -167,7 +165,7 @@ public class HandPosAction implements Action {
 
 			if(log.isDebugEnabled()) log.debug("save finlsh");
 		} catch (Exception e) {
-			response +="-1,"+e.getMessage();
+			response +="1,"+e.getMessage();
 
 			System.out.println("CardDBObject Exception="+e.getMessage());
 			try {
