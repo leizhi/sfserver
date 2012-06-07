@@ -28,9 +28,9 @@ public class HandPosAction implements Action {
 
 	private static final String EXISTS_CARD="SELECT COUNT(card.id) FROM Card card,WineJar wineJar WHERE wineJar.id=card.wineJarId AND rfidcode=?";
 
-	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
+	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel,cardJob.branchId branchId WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
-	private static final String ADD_CARD_PATROL_LOG="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId) VALUES(?,?,?,?,3)";
+	private static final String ADD_CARD_PATROL_LOG="INSERT INTO CardJob(id,jobDate,cardId,userId,branchId,jobTypeId) VALUES(?,?,?,?,3)";
 
 	public String processLogin(String userName,String password){
 		if(log.isDebugEnabled()) log.debug("processLogin");	
@@ -141,6 +141,7 @@ public class HandPosAction implements Action {
 			
             rs = pstmt.executeQuery();
             String str="";
+            int branchId=-1;
             while (rs.next()) {
             	str += "标示号:"+rs.getString(1)+",";
             	str += "酒罐号:"+rs.getString(2)+",";
@@ -150,6 +151,8 @@ public class HandPosAction implements Action {
             	str += "容积:"+rs.getString(6)+",";
             	str += "单位:"+rs.getString(7)+",";
             	str += "原料:"+rs.getString(8);
+            	
+            	branchId = rs.getInt(9);
             }
             
 			pstmt = conn.prepareStatement(ADD_CARD_PATROL_LOG);
@@ -171,6 +174,9 @@ public class HandPosAction implements Action {
 			pstmt.setInt(3, cardId);
 			
 			pstmt.setInt(4, userId);
+			
+			pstmt.setInt(5, branchId);
+			
 			pstmt.execute();
 			
 			conn.commit();

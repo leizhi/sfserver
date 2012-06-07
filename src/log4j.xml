@@ -9,7 +9,7 @@
 	-->
     <appender name="sfserverLog" class="org.apache.log4j.RollingFileAppender">
             <param name="MaxFileSize" value="2000KB"/>
-            <param name="File" value="sfserverLo.log"/>
+            <param name="File" value="sfserverLog.log"/>
             <param name="Append" value="true"/>
             <layout class="org.apache.log4j.PatternLayout">
                     <param name="ConversionPattern" value="%d %-5p [%t] %C{2} (%l) - %m\n"/>
