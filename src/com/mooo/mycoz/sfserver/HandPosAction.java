@@ -28,7 +28,7 @@ public class HandPosAction implements Action {
 
 	private static final String EXISTS_CARD="SELECT COUNT(card.id) FROM Card card,WineJar wineJar WHERE wineJar.id=card.wineJarId AND rfidcode=?";
 
-	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel,cardJob.branchId branchId WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
+	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material,card.branchId FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
 	private static final String ADD_CARD_PATROL_LOG="INSERT INTO CardJob(id,jobDate,cardId,userId,branchId,jobTypeId) VALUES(?,?,?,?,3)";
 
