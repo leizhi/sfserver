@@ -114,6 +114,8 @@ public class SFServer extends ServerSocket {
 				while (forever){			
 					requestLine = read.readLine();
 					
+					System.out.println("requestLine:"+requestLine);
+
 					if(requestLine==null || requestLine.equals("3")|| requestLine.equals("*3#"))
 						break;
 					
