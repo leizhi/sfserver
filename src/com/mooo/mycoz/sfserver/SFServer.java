@@ -52,7 +52,7 @@ public class SFServer extends ServerSocket {
 							runCount++;
 					}
 					if(log.isDebugEnabled())log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
-					System.out.println(">>>>>>>>>>>运行线程数:"+ runCount);
+					if(log.isErrorEnabled()) log.error(">>>>>>>>>>>运行线程数:"+ runCount);
 
 //					synchronized (initLock) {
 //						wait(1000*10); //10 seconds
@@ -68,11 +68,11 @@ public class SFServer extends ServerSocket {
 			}//Loop End
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-			System.out.println("Exception:" + e.getMessage());
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 			if(log.isDebugEnabled())log.debug("Exception:" + e.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("Exception:" + e.getMessage());
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 			if(log.isDebugEnabled())log.debug("Exception:" + e.getMessage());
 		} finally {
 			close();
@@ -114,7 +114,7 @@ public class SFServer extends ServerSocket {
 				while (forever){			
 					requestLine = read.readLine();
 					
-					System.out.println("requestLine:"+requestLine);
+					if(log.isErrorEnabled()) log.error("requestLine:"+requestLine);
 
 					if(requestLine==null || requestLine.equals("3")|| requestLine.equals("*3#"))
 						break;
@@ -133,7 +133,7 @@ public class SFServer extends ServerSocket {
 					String split = "*0,"+Action.PROCESS_LOGIN+",";
 					if(response.indexOf(split)>-1){
 						value = response.substring(split.length(),response.length()-1);
-						System.out.println("value:"+value);
+						if(log.isErrorEnabled()) log.error("value:"+value);
 						if(value!=null && !value.equals("")){
 							userId=new Integer(value);
 						}
@@ -144,10 +144,12 @@ public class SFServer extends ServerSocket {
 				
 			} catch (Exception e) {
 				e.printStackTrace();
-				System.out.println("客户失去连接...");
+				if(log.isErrorEnabled()) log.error("客户失去连接...");
+	    		if(log.isErrorEnabled()) log.error("客户失去连接...");	
+
 			} finally {
 				try {
-					System.out.println("客户退出...");
+					if(log.isErrorEnabled()) log.error("客户退出...");
 					
 					if( in !=null)
 						in.close();

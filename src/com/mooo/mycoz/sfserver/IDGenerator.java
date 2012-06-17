@@ -5,9 +5,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.mooo.mycoz.db.pool.DbConnectionManager;
 
 public class IDGenerator {
+
+	private static Log log = LogFactory.getLog(IDGenerator.class);
 
 	//commons SQL
 
@@ -75,14 +80,14 @@ public class IDGenerator {
 			pstmt = connection.prepareStatement(sql);
 			pstmt.setString(1, fieldValue);
 			
-			System.out.println("sql:"+sql);
+			if(log.isDebugEnabled()) log.debug("sql:"+sql);
 
 			ResultSet result = pstmt.executeQuery();
 			if(result.next()){
 				id = result.getInt(1);
 			}
 		} catch (Exception e) {
-			System.out.println("Exception="+e.getMessage());
+			if(log.isDebugEnabled()) log.debug("Exception="+e.getMessage());
 		}finally{
 
 			try {
@@ -120,7 +125,7 @@ public class IDGenerator {
 				count = result.getInt(1);
 			}
 		} catch (Exception e) {
-			System.out.println("Exception="+e.getMessage());
+			if(log.isDebugEnabled()) log.debug("Exception="+e.getMessage());
 		}finally{
 
 			try {

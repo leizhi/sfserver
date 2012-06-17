@@ -158,15 +158,15 @@ public class HandPosAction implements Action {
 			pstmt = conn.prepareStatement(ADD_CARD_PATROL_LOG);
 			
 			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
-			System.out.println("cardJobId:"+cardJobId);
+			if(log.isDebugEnabled()) log.debug("cardJobId:"+cardJobId);
 
 			pstmt.setInt(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			
-			System.out.println("rfidcode:"+rfidcode);
+			if(log.isDebugEnabled()) log.debug("rfidcode:"+rfidcode);
 
 			int cardId = IDGenerator.getId(conn,"Card","rfidcode",rfidcode);
-			System.out.println("cardId:"+cardId);
+			if(log.isDebugEnabled()) log.debug("cardId:"+cardId);
 			if(cardId<0){
 				throw new NullPointerException("无此卡记录"); 
 			}
@@ -187,7 +187,7 @@ public class HandPosAction implements Action {
 		} catch (Exception e) {
 			response +="1,"+e.getMessage();
 
-			System.out.println("CardDBObject Exception="+e.getMessage());
+			if(log.isDebugEnabled()) log.debug("CardDBObject Exception="+e.getMessage());
 			try {
 				conn.rollback();
 			} catch (SQLException e1) {
@@ -228,11 +228,11 @@ public class HandPosAction implements Action {
 
 		    String[] args=doRequest.split(",");
 		    
-		    System.out.println("length:"+args.length);
+		    if(log.isDebugEnabled()) log.debug("length:"+args.length);
 		    
 			for(int i=0;i<args.length;i++){
 				args[i]=args[i].trim();
-				System.out.println(args[i]);
+				if(log.isDebugEnabled()) log.debug(args[i]);
 			}
 			
 			int cmd = Integer.parseInt(args[0]);//命令
