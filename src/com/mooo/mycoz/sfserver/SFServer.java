@@ -13,7 +13,7 @@ import java.util.Vector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class SFServer extends ServerSocket {
+public class SFServer{
 	private static Log log = LogFactory.getLog(SFServer.class);
 
 //	private static Object initLock = new Object();
@@ -21,12 +21,11 @@ public class SFServer extends ServerSocket {
 	private Vector<Thread> threadPool;
 	private int maxConnMSec;
 	
-//	protected static final int SERVER_PORT = Integer.valueOf(PropertyManager.getProperty("serverPort")).intValue();
-
+	private ServerSocket sSocket;
 	private static int SERVICE_PORT = 8000;
 	
 	public SFServer(int maxConns,double maxConnTime) throws IOException {
-		super(SERVICE_PORT);
+		sSocket = new ServerSocket(SERVICE_PORT);
 
 		if(log.isDebugEnabled()) log.debug("服务器启动");
 		
@@ -52,15 +51,16 @@ public class SFServer extends ServerSocket {
 							runCount++;
 					}
 					if(log.isDebugEnabled())log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
-					if(log.isErrorEnabled()) log.error(">>>>>>>>>>>运行线程数:"+ runCount);
+					if(log.isDebugEnabled()) log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
 
 //					synchronized (initLock) {
 //						wait(1000*10); //10 seconds
 //					}
 					
 					//处理客户端请求并生成子线程
-					Thread thread = new Thread(new SessionThread(accept()));
+					Thread thread = new Thread(new SessionThread(sSocket.accept()));
 					thread.start();
+//					thread.join();
 					
 					Thread.sleep(20);//wait 20ms
 					threadPool.add(thread);
@@ -68,16 +68,15 @@ public class SFServer extends ServerSocket {
 			}//Loop End
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
+			if(log.isDebugEnabled()) log.debug("Exception:" + e.getMessage());
 			if(log.isDebugEnabled())log.debug("Exception:" + e.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
-			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
+			if(log.isDebugEnabled()) log.debug("Exception:" + e.getMessage());
 			if(log.isDebugEnabled())log.debug("Exception:" + e.getMessage());
 		} finally {
-			close();
+			sSocket.close();
 		}
-		
 	}
 
 	/*
@@ -103,6 +102,7 @@ public class SFServer extends ServerSocket {
 
 		public void run() {
 			Integer userId=null;
+			if(log.isDebugEnabled()) log.debug("SessionThread start...");
 
 			try {
 //				String message = "--- Welcome to this chatroom 欢迎---";
@@ -114,7 +114,7 @@ public class SFServer extends ServerSocket {
 				while (forever){			
 					requestLine = read.readLine();
 					
-					if(log.isErrorEnabled()) log.error("requestLine:"+requestLine);
+					if(log.isDebugEnabled()) log.debug("requestLine:"+requestLine);
 
 					if(requestLine==null || requestLine.equals("3")|| requestLine.equals("*3#"))
 						break;
@@ -133,7 +133,7 @@ public class SFServer extends ServerSocket {
 					String split = "*0,"+Action.PROCESS_LOGIN+",";
 					if(response.indexOf(split)>-1){
 						value = response.substring(split.length(),response.length()-1);
-						if(log.isErrorEnabled()) log.error("value:"+value);
+						if(log.isDebugEnabled()) log.debug("value:"+value);
 						if(value!=null && !value.equals("")){
 							userId=new Integer(value);
 						}
@@ -144,12 +144,12 @@ public class SFServer extends ServerSocket {
 				
 			} catch (Exception e) {
 				e.printStackTrace();
-				if(log.isErrorEnabled()) log.error("客户失去连接...");
-	    		if(log.isErrorEnabled()) log.error("客户失去连接...");	
+				if(log.isDebugEnabled()) log.debug("客户失去连接...");
+	    		if(log.isDebugEnabled()) log.debug("客户失去连接...");	
 
 			} finally {
 				try {
-					if(log.isErrorEnabled()) log.error("客户退出...");
+					if(log.isDebugEnabled()) log.debug("客户退出...");
 					
 					if( in !=null)
 						in.close();
@@ -163,6 +163,7 @@ public class SFServer extends ServerSocket {
 					e.printStackTrace();
 				}
 			}
+			if(log.isDebugEnabled()) log.debug("SessionThread end...");
 		}//run end
 	}
 	
