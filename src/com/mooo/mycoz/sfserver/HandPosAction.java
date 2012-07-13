@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.util.Calendar;
 
 import org.apache.commons.logging.Log;
@@ -12,6 +13,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.mooo.mycoz.common.StringUtils;
 import com.mooo.mycoz.db.pool.DbConnectionManager;
+import com.mooo.mycoz.db.sql.AbstractSQL;
 
 public class HandPosAction implements Action {
 	
@@ -30,8 +32,134 @@ public class HandPosAction implements Action {
 
 	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material,card.branchId FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
-	private static final String ADD_CARD_PATROL_LOG="INSERT INTO CardJob(id,jobDate,cardId,userId,branchId,jobTypeId) VALUES(?,?,?,?,?,3)";
+	private static final String ADD_CARD_PATROL_LOG="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId) VALUES(?,?,?,?,3)";
 
+	public boolean existsUser(String userName){
+		Connection connection=null;
+        PreparedStatement pstmt = null;
+        int count=0;
+        
+        try {
+    		if(StringUtils.isNull(userName)){
+    			throw new NullPointerException("请输入用户名");
+    		}
+    		
+			connection = DbConnectionManager.getConnection();
+			pstmt = connection.prepareStatement(EXISTS_USER);
+            pstmt.setString(1, userName);
+            
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+            	count = rs.getInt(1);
+            }
+            
+            if(count > 0) return true;
+            
+		}catch (NullPointerException e) {
+			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
+		}catch (SQLException e) {
+			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
+	   }finally {
+			try {
+				if(pstmt != null)
+					pstmt.close();
+				if(connection != null)
+					connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+		}
+		return false;
+	}
+	
+	public int processAuth(String userName,String password){
+		Connection connection=null;
+        PreparedStatement pstmt = null;
+        int userId=0;
+        
+        try {
+        	if(StringUtils.isNull(userName)){
+    			throw new NullPointerException("请输入用户名");
+    		}
+    		
+    		if(StringUtils.isNull(password)){
+    			throw new NullPointerException("请输入密码");
+    		}
+    		
+			connection = DbConnectionManager.getConnection();
+			
+			pstmt = connection.prepareStatement(LOGIN);
+            pstmt.setString(1, userName);
+            pstmt.setString(2, StringUtils.hash(password));
+            
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+            	userId = rs.getInt(1);
+            }
+            
+		}catch (NullPointerException e) {
+			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
+		}catch (SQLException e) {
+			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
+	   }finally {
+			try {
+				if(pstmt != null)
+					pstmt.close();
+				if(connection != null)
+					connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+		}
+		return userId;
+	}
+	
+	public boolean saveCardJob(int userId,String rfidcode,String dateTime) throws ParseException{
+		Connection connection=null;
+        PreparedStatement pstmt = null;
+        
+        try {
+			connection = DbConnectionManager.getConnection();
+			
+			pstmt = connection.prepareStatement(ADD_CARD_PATROL_LOG);
+			
+			int cardJobId = IDGenerator.getNextID(connection,"CardJob");
+			pstmt.setInt(1, cardJobId);
+//			pstmt.setTimestamp(2, new Timestamp(Calendar.getInstance().getTimeInMillis()));
+			
+			pstmt.setTimestamp(2, new Timestamp(AbstractSQL.dtformat.parse(dateTime).getTime()));
+			
+			int cardId = IDGenerator.getId(connection,"Card","rfidcode",rfidcode);
+			if(cardId<0){
+				throw new NullPointerException("无此卡记录"); 
+			}
+			
+			pstmt.setInt(3, cardId);
+			pstmt.setInt(4, userId);
+			pstmt.execute();
+			
+			return true;
+		}catch (NullPointerException e) {
+			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
+		}catch (ParseException e) {
+			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
+		}catch (SQLException e) {
+			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
+	   }finally {
+			try {
+				if(pstmt != null)
+					pstmt.close();
+				if(connection != null)
+					connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return false;
+	}
+	
 	public String processLogin(String userName,String password){
 		if(log.isDebugEnabled()) log.debug("processLogin");	
 		String response = "*";
@@ -103,7 +231,7 @@ public class HandPosAction implements Action {
 		return response += "#";
 	}
 	
-	public String cardPatrol(String rfidcode,Integer userId){
+	public String cardPatrol(String userName,String userPassword,String rfidcode){
 		String response = "*";
 
 		Connection conn = null;
@@ -141,7 +269,6 @@ public class HandPosAction implements Action {
 			
             rs = pstmt.executeQuery();
             String str="";
-            int branchId=-1;
             while (rs.next()) {
             	str += "标示号:"+rs.getString(1)+",";
             	str += "酒罐号:"+rs.getString(2)+",";
@@ -150,10 +277,7 @@ public class HandPosAction implements Action {
             	str += "酒精度:"+rs.getString(5)+"%,";
             	str += "容积:"+rs.getString(6)+",";
             	str += "单位:"+rs.getString(7)+",";
-            	str += "原料:"+rs.getString(8);
-            	
-            	branchId = rs.getInt(9);
-            }
+            	str += "原料:"+rs.getString(8);            }
             
 			pstmt = conn.prepareStatement(ADD_CARD_PATROL_LOG);
 			
@@ -162,7 +286,6 @@ public class HandPosAction implements Action {
 
 			pstmt.setInt(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(Calendar.getInstance().getTimeInMillis()));
-			
 			if(log.isDebugEnabled()) log.debug("rfidcode:"+rfidcode);
 
 			int cardId = IDGenerator.getId(conn,"Card","rfidcode",rfidcode);
@@ -172,11 +295,7 @@ public class HandPosAction implements Action {
 			}
 			
 			pstmt.setInt(3, cardId);
-			
-			pstmt.setInt(4, userId);
-			
-			pstmt.setInt(5, branchId);
-			
+			pstmt.setInt(4, processAuth(userName,userPassword));
 			pstmt.execute();
 			
 			conn.commit();
@@ -214,7 +333,35 @@ public class HandPosAction implements Action {
 		return response += "#";
 	}
 	
-	public String forward(String requestLine,Integer userId) {
+	public String synchronize(String userName,String userPassword,String buffer){
+		String response = "*";
+		
+		try{
+			if(!existsUser(userName))
+				throw new NullPointerException("无此用户");
+			
+			int userId = processAuth(userName,userPassword);
+			
+			if(userId<0)
+				throw new NullPointerException("登录验证失败");
+			
+			String[] record=buffer.split("/");
+			
+			for(int i=0;i<record.length;i++){
+				record[i]=record[i].trim();
+				
+				String[] parameter = record[i].split(",");
+				saveCardJob(userId,parameter[0].trim(),parameter[1].trim());
+			}
+			response += "0";
+		}catch(Exception e){
+			response += "1";
+		}
+		
+		return response += "#";
+	}
+	
+	public String forward(String requestLine) {
 //		String[] args = request.split(" +\n*");
 		String response = null;
 
@@ -226,7 +373,7 @@ public class HandPosAction implements Action {
 			String doRequest=requestLine.substring(requestLine.indexOf("*")+1,
 					requestLine.lastIndexOf("#"));
 
-		    String[] args=doRequest.split(",");
+		    String[] args=doRequest.split(";");
 		    
 		    if(log.isDebugEnabled()) log.debug("length:"+args.length);
 		    
@@ -246,14 +393,20 @@ public class HandPosAction implements Action {
 					response = processLogin(args[1], args[2]);
 					break;
 				case Action.SEARCH_CARD:
-					if(args.length !=2){
+					if(args.length !=4){
 						response = "参数不正确";
 				    }
 					
-					if(userId!=null)
-						response = cardPatrol(args[1],userId);
-					else
-						response = "未登录";
+					response = cardPatrol(args[1],args[2],args[3]);
+					
+					break;
+				case Action.ACTION_SYN:
+					
+					if(args.length !=4){
+						response = "参数不正确";
+				    }
+					
+					response = synchronize(args[1],args[2],args[3]);
 					
 					break;
 				default:

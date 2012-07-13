@@ -101,7 +101,6 @@ public class SFServer{
 		}
 
 		public void run() {
-			Integer userId=null;
 			if(log.isDebugEnabled()) log.debug("SessionThread start...");
 
 			try {
@@ -124,20 +123,11 @@ public class SFServer{
 					//打印请求数据
 //					print.println("requestLine :" + requestLine);
 					
-					String response = ActionFactory.getInstance().forward(requestLine,userId);
+					String response = ActionFactory.getInstance().forward(requestLine);
 					//打印响应数据
 //					print.println("response :" + response);
 					print.println(response);
 					
-					String value=null;
-					String split = "*0,"+Action.PROCESS_LOGIN+",";
-					if(response.indexOf(split)>-1){
-						value = response.substring(split.length(),response.length()-1);
-						if(log.isDebugEnabled()) log.debug("value:"+value);
-						if(value!=null && !value.equals("")){
-							userId=new Integer(value);
-						}
-					}
 					//wait input
 					//print.print(">");
 				}//end while
