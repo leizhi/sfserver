@@ -28,16 +28,16 @@ public class HandPosAction implements Action {
 
 	private static final String REGISTER_CARD="SELECT COUNT(id) FROM Card WHERE rfidcode=?";
 
-	private static final String EXISTS_CARD="SELECT COUNT(card.id) FROM Card card,WineJar wineJar WHERE wineJar.id=card.wineJarId AND rfidcode=?";
+	private static final String EXISTS_CARD="SELECT card.id FROM Card card,WineJar wineJar WHERE wineJar.id=card.wineJarId AND rfidcode=?";
 
 	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material,card.branchId FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
 	private static final String ADD_CARD_PATROL_LOG="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId) VALUES(?,?,?,?,3)";
 
-	public boolean existsUser(String userName){
+	public int getUserId(String userName){
 		Connection connection=null;
         PreparedStatement pstmt = null;
-        int count=0;
+        int userId=-1;
         
         try {
     		if(StringUtils.isNull(userName)){
@@ -50,10 +50,8 @@ public class HandPosAction implements Action {
             
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-            	count = rs.getInt(1);
+            	userId = rs.getInt(1);
             }
-            
-            if(count > 0) return true;
             
 		}catch (NullPointerException e) {
 			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
@@ -70,7 +68,7 @@ public class HandPosAction implements Action {
 			}
 			
 		}
-		return false;
+		return userId;
 	}
 	
 	public int processAuth(String userName,String password){
@@ -116,7 +114,7 @@ public class HandPosAction implements Action {
 		return userId;
 	}
 	
-	public boolean saveCardJob(int userId,String rfidcode,String dateTime) throws ParseException{
+	public boolean saveCardJob(String rfidcode,String userName,String dateTime) throws ParseException{
 		Connection connection=null;
         PreparedStatement pstmt = null;
         
@@ -137,7 +135,7 @@ public class HandPosAction implements Action {
 			}
 			
 			pstmt.setInt(3, cardId);
-			pstmt.setInt(4, userId);
+			pstmt.setInt(4, getUserId(userName));
 			pstmt.execute();
 			
 			return true;
@@ -160,75 +158,83 @@ public class HandPosAction implements Action {
 		return false;
 	}
 	
-	public String processLogin(String userName,String password){
-		if(log.isDebugEnabled()) log.debug("processLogin");	
+	public String synchronize(String userName,String userPassword,String buffer){
 		String response = "*";
+		
+		try{
+			if(getUserId(userName)<0)
+				throw new NullPointerException("无此用户");
+			
+			int userId = processAuth(userName,userPassword);
+			
+			if(userId<0)
+				throw new NullPointerException("登录验证失败");
+			
+			String[] record=buffer.split("/");
+			
+			for(int i=0;i<record.length;i++){
+				record[i]=record[i].trim();
+				
+				String[] parameter = record[i].split(",");
+				saveCardJob(parameter[0].trim(),parameter[1].trim(),parameter[2].trim());
+			}
+			response += "0";
+		}catch(Exception e){
+			response += "1";
+		}
+		
+		return response += "#";
+	}
+	
+	public String forward(String requestLine) {
+//		String[] args = request.split(" +\n*");
+		String response = null;
 
-		Connection connection=null;
-        PreparedStatement pstmt = null;
-        int count=0;
-        try {
-    		if(log.isDebugEnabled()) log.debug("processLogin getName:"+userName);	
-    		if(log.isDebugEnabled()) log.debug("processLogin getPassword:"+password);	
-    		Integer userId = null;
-
-    		if(StringUtils.isNull(userName)){
-    			throw new NullPointerException("请输入用户名");
-    		}
-    		
-    		if(StringUtils.isNull(password)){
-    			throw new NullPointerException("请输入密码");
-    		}
-			connection = DbConnectionManager.getConnection();
-			pstmt = connection.prepareStatement(EXISTS_USER);
-            pstmt.setString(1, userName);
-            
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-            	count = rs.getInt(1);
-            }
-            
-            if(count < 1){
-    			throw new NullPointerException("无此用户");
-            }
-            count=0;
-            
-            pstmt = connection.prepareStatement(LOGIN);
-            pstmt.setString(1, userName);
-            pstmt.setString(2, StringUtils.hash(password));
-
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-            	userId=rs.getInt(1);
-
-            	count=1;
-            }
-            
-    		if (log.isDebugEnabled()) log.debug("count:"+count);
-
-            if(count !=1){
-    			throw new NullPointerException("用户和密码不匹配");
-            }
-            
-    		response +="0,"+Action.PROCESS_LOGIN+","+userId;
-		}catch (NullPointerException e) {
-			response +="1,"+e.getMessage();
-			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
-		}catch (SQLException e) {
-			response +="2,"+e.getMessage();
-			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
-	   }finally {
-			try {
-				if(pstmt != null)
-					pstmt.close();
-				if(connection != null)
-					connection.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
+		try{
+			if(!requestLine.startsWith("*")||!requestLine.endsWith("#")){
+				response = "数据格式不正确";
 			}
 			
+			String doRequest=requestLine.substring(requestLine.indexOf("*")+1,
+					requestLine.lastIndexOf("#"));
+
+		    String[] args=doRequest.split(";");
+		    
+		    if(log.isDebugEnabled()) log.debug("length:"+args.length);
+		    
+			for(int i=0;i<args.length;i++){
+				args[i]=args[i].trim();
+				if(log.isDebugEnabled()) log.debug(args[i]);
+			}
+			
+			int cmd = Integer.parseInt(args[0]);//命令
+
+			 switch(cmd){
+				case Action.SEARCH_CARD:
+					if(args.length !=4){
+						response = "参数不正确";
+				    }
+					
+					response = cardPatrol(args[1],args[2],args[3]);
+					
+					break;
+				case Action.ACTION_SYN:
+					
+					if(args.length !=4){
+						response = "参数不正确";
+				    }
+					
+					response = synchronize(args[1],args[2],args[3]);
+					
+					break;
+				default:
+					break;
+			   }
+		}catch(Exception e){
+			response = "数据格式不正确";
 		}
-		return response += "#";
+		
+		return response;
 	}
 	
 	public String cardPatrol(String userName,String userPassword,String rfidcode){
@@ -331,91 +337,5 @@ public class HandPosAction implements Action {
 		}
 		
 		return response += "#";
-	}
-	
-	public String synchronize(String userName,String userPassword,String buffer){
-		String response = "*";
-		
-		try{
-			if(!existsUser(userName))
-				throw new NullPointerException("无此用户");
-			
-			int userId = processAuth(userName,userPassword);
-			
-			if(userId<0)
-				throw new NullPointerException("登录验证失败");
-			
-			String[] record=buffer.split("/");
-			
-			for(int i=0;i<record.length;i++){
-				record[i]=record[i].trim();
-				
-				String[] parameter = record[i].split(",");
-				saveCardJob(userId,parameter[0].trim(),parameter[1].trim());
-			}
-			response += "0";
-		}catch(Exception e){
-			response += "1";
-		}
-		
-		return response += "#";
-	}
-	
-	public String forward(String requestLine) {
-//		String[] args = request.split(" +\n*");
-		String response = null;
-
-		try{
-			if(!requestLine.startsWith("*")||!requestLine.endsWith("#")){
-				response = "数据格式不正确";
-			}
-			
-			String doRequest=requestLine.substring(requestLine.indexOf("*")+1,
-					requestLine.lastIndexOf("#"));
-
-		    String[] args=doRequest.split(";");
-		    
-		    if(log.isDebugEnabled()) log.debug("length:"+args.length);
-		    
-			for(int i=0;i<args.length;i++){
-				args[i]=args[i].trim();
-				if(log.isDebugEnabled()) log.debug(args[i]);
-			}
-			
-			int cmd = Integer.parseInt(args[0]);//命令
-
-			 switch(cmd){
-				case Action.PROCESS_LOGIN:
-					if(args.length !=3){
-						response = "参数不正确";
-				    }
-					
-					response = processLogin(args[1], args[2]);
-					break;
-				case Action.SEARCH_CARD:
-					if(args.length !=4){
-						response = "参数不正确";
-				    }
-					
-					response = cardPatrol(args[1],args[2],args[3]);
-					
-					break;
-				case Action.ACTION_SYN:
-					
-					if(args.length !=4){
-						response = "参数不正确";
-				    }
-					
-					response = synchronize(args[1],args[2],args[3]);
-					
-					break;
-				default:
-					break;
-			   }
-		}catch(Exception e){
-			response = "数据格式不正确";
-		}
-		
-		return response;
 	}
 }
