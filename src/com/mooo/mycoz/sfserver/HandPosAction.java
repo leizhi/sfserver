@@ -173,7 +173,7 @@ public class HandPosAction implements Action {
 			boolean allOK = true;
 			boolean saveOK = true;
 			boolean isHead = true;
-			
+
 			for(int i=0;i<record.length;i++){
 				record[i]=record[i].trim();
 				
@@ -184,7 +184,6 @@ public class HandPosAction implements Action {
 				
 				allOK = allOK & saveOK;
 				
-				isHead = true;
 				if(!saveOK){
 					if(isHead){
 						isHead = false;
