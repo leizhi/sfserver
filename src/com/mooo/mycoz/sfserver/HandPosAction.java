@@ -157,7 +157,7 @@ public class HandPosAction implements Action {
 	}
 	
 	public String synchronize(String userName,String userPassword,String buffer){
-		String response = "*";
+		String response = "";
 		
 		try{
 			if(getUserId(userName)<0)
@@ -170,10 +170,10 @@ public class HandPosAction implements Action {
 			
 			String[] record=buffer.split("/");
 			String labelKey=null;
-			boolean allOK = true;
 			boolean saveOK = true;
-			boolean isHead = true;
 
+			String error="";
+			int erCount=0;
 			for(int i=0;i<record.length;i++){
 				record[i]=record[i].trim();
 				
@@ -182,26 +182,22 @@ public class HandPosAction implements Action {
 				labelKey = parameter[0].trim();
 				saveOK = saveCardJob(parameter[1].trim(),parameter[2].trim(),parameter[3].trim());
 				
-				allOK = allOK & saveOK;
-				
 				if(!saveOK){
-					if(isHead){
-						isHead = false;
-						response += "1,"+labelKey;
-					}else{
-						response += ","+labelKey;
-					}
+					erCount ++;
+					error += ","+labelKey;
 				}
 			}
 			
-			if(allOK){
-				response += "0";
+			if(erCount>0){
+				response = "*1," +erCount+error+"#";
+			}else{
+				response = "*0#";
 			}
+			
+			return response;
 		}catch(Exception e){
 			return "*1#";
 		}
-		
-		return response += "#";
 	}
 	
 	public String forward(String requestLine) {
