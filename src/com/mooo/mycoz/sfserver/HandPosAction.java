@@ -170,6 +170,7 @@ public class HandPosAction implements Action {
 			
 			String[] record=buffer.split("/");
 			String labelKey=null;
+			boolean allOK = true;
 			boolean saveOK = true;
 			boolean isHead = true;
 			
@@ -181,15 +182,21 @@ public class HandPosAction implements Action {
 				labelKey = parameter[0].trim();
 				saveOK = saveCardJob(parameter[1].trim(),parameter[2].trim(),parameter[3].trim());
 				
+				allOK = allOK & saveOK;
+				
 				isHead = true;
 				if(!saveOK){
 					if(isHead){
 						isHead = false;
-						response += "0,"+labelKey;
+						response += "1,"+labelKey;
 					}else{
 						response += ","+labelKey;
 					}
 				}
+			}
+			
+			if(allOK){
+				response += "0";
 			}
 		}catch(Exception e){
 			return "*1#";
