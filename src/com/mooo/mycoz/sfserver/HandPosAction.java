@@ -125,8 +125,6 @@ public class HandPosAction implements Action {
 			
 			int cardJobId = IDGenerator.getNextID(connection,"CardJob");
 			pstmt.setInt(1, cardJobId);
-//			pstmt.setTimestamp(2, new Timestamp(Calendar.getInstance().getTimeInMillis()));
-			
 			pstmt.setTimestamp(2, new Timestamp(AbstractSQL.dtformat.parse(dateTime).getTime()));
 			
 			int cardId = IDGenerator.getId(connection,"Card","rfidcode",rfidcode);
@@ -171,16 +169,30 @@ public class HandPosAction implements Action {
 				throw new NullPointerException("登录验证失败");
 			
 			String[] record=buffer.split("/");
+			String labelKey=null;
+			boolean saveOK = true;
+			boolean isHead = true;
 			
 			for(int i=0;i<record.length;i++){
 				record[i]=record[i].trim();
 				
 				String[] parameter = record[i].split(",");
-				saveCardJob(parameter[0].trim(),parameter[1].trim(),parameter[2].trim());
+				
+				labelKey = parameter[0].trim();
+				saveOK = saveCardJob(parameter[1].trim(),parameter[2].trim(),parameter[3].trim());
+				
+				isHead = true;
+				if(!saveOK){
+					if(isHead){
+						isHead = false;
+						response += "0,"+labelKey;
+					}else{
+						response += ","+labelKey;
+					}
+				}
 			}
-			response += "0";
 		}catch(Exception e){
-			response += "1";
+			return "*1#";
 		}
 		
 		return response += "#";
