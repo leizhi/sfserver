@@ -193,6 +193,8 @@ public class HandPosAction implements Action {
 			
 			if(isHead){
 				response = "*0#";
+			}else{
+				response = "*1,"+response+",#,#";
 			}
 			
 			return response;
