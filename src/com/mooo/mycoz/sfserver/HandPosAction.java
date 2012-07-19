@@ -195,7 +195,7 @@ public class HandPosAction implements Action {
 			if(isHead){
 				response = "*0#";
 			}else{
-				response = "*3,"+response+";#;#";
+				response = "*3;"+response+";#;#";
 			}
 			
 		}catch(Exception e){
