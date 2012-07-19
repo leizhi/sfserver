@@ -128,7 +128,7 @@ public class HandPosAction implements Action {
 				throw new Exception("无此卡记录"); 
 			}
 			
-			if(IDGenerator.enableCard(connection, rfidcode)){
+			if(!IDGenerator.enableCard(connection, rfidcode)){
 				RET = 2;
 				throw new Exception("此卡未激活"); 
 			}
