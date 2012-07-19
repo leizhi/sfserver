@@ -114,35 +114,36 @@ public class HandPosAction implements Action {
 		return userId;
 	}
 	
-	public boolean saveCardJob(String rfidcode,String userName,String dateTime) throws ParseException{
+	public int saveCardJob(String rfidcode,String userName,String dateTime) throws ParseException{
 		Connection connection=null;
         PreparedStatement pstmt = null;
-        
+        int RET=-1;
         try {
 			connection = DbConnectionManager.getConnection();
-			
 			pstmt = connection.prepareStatement(ADD_CARD_PATROL_LOG);
+			
+			int cardId = IDGenerator.getId(connection,"Card","rfidcode",rfidcode);
+			if(cardId<0){
+				RET = 1;
+				throw new Exception("无此卡记录"); 
+			}
+			
+			if(IDGenerator.enableCard(connection, rfidcode)){
+				RET = 2;
+				throw new Exception("此卡未激活"); 
+			}
 			
 			int cardJobId = IDGenerator.getNextID(connection,"CardJob");
 			pstmt.setInt(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(AbstractSQL.dtformat.parse(dateTime).getTime()));
-			
-			int cardId = IDGenerator.getId(connection,"Card","rfidcode",rfidcode);
-			if(cardId<0){
-				throw new NullPointerException("无此卡记录"); 
-			}
-			
 			pstmt.setInt(3, cardId);
 			pstmt.setInt(4, getUserId(userName));
 			pstmt.execute();
 			
-			return true;
-		}catch (NullPointerException e) {
-			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
-		}catch (ParseException e) {
-			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
-		}catch (SQLException e) {
-			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
+			RET=0;
+		}catch (Exception e) {
+			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());
+			RET=3;
 	   }finally {
 			try {
 				if(pstmt != null)
@@ -153,7 +154,7 @@ public class HandPosAction implements Action {
 				e.printStackTrace();
 			}
 		}
-		return false;
+        return RET;
 	}
 	
 	public String synchronize(String userName,String userPassword,String buffer){
@@ -161,16 +162,16 @@ public class HandPosAction implements Action {
 		
 		try{
 			if(getUserId(userName)<0)
-				throw new NullPointerException("无此用户");
+				throw new NullPointerException("*1#");//无此用户
 			
 			int userId = processAuth(userName,userPassword);
 			
 			if(userId<0)
-				throw new NullPointerException("登录验证失败");
+				throw new NullPointerException("*2#");//登录验证失败
 			
 			String[] record=buffer.split("/");
-			String labelKey=null;
-			boolean saveOK = true;
+			String rfid=null;
+			int saveCardJob = -1;
 			boolean isHead = true;
 			
 			for(int i=0;i<record.length;i++){
@@ -178,15 +179,15 @@ public class HandPosAction implements Action {
 				
 				String[] parameter = record[i].split(",");
 				
-				labelKey = parameter[0].trim();
-				saveOK = saveCardJob(parameter[1].trim(),parameter[2].trim(),parameter[3].trim());
+				rfid = parameter[0].trim();
+				saveCardJob = saveCardJob(parameter[1].trim(),parameter[2].trim(),parameter[3].trim());
 				
-				if(!saveOK){
+				if(saveCardJob!=0){
 					if(isHead){
 						isHead=false;
-						response += labelKey;
+						response += rfid+","+saveCardJob;
 					}else{
-						response += ","+labelKey;
+						response += ";"+rfid+","+saveCardJob;
 					}
 				}
 			}
@@ -194,13 +195,14 @@ public class HandPosAction implements Action {
 			if(isHead){
 				response = "*0#";
 			}else{
-				response = "*1,"+response+",#,#";
+				response = "*3,"+response+";#;#";
 			}
 			
-			return response;
 		}catch(Exception e){
-			return "*1#";
+			response=e.getMessage();
 		}
+		
+		return response;
 	}
 	
 	public String forward(String requestLine) {
