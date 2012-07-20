@@ -143,9 +143,9 @@ public class HandPosAction implements Action {
 			RET=0;
 			
         }catch (CardException e) {
-			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());
+			if(log.isErrorEnabled()) log.error("CardException:"+e.getMessage());
 		}catch (Exception e) {
-			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());
+			if(log.isErrorEnabled()) log.error("Exception:"+e.getMessage());
 			RET=3;
 	   }finally {
 			try {
