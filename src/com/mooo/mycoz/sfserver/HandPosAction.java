@@ -125,12 +125,12 @@ public class HandPosAction implements Action {
 			int cardId = IDGenerator.getId(connection,"Card","rfidcode",rfidcode);
 			if(cardId<0){
 				RET = 1;
-				throw new Exception("无此卡记录"); 
+				throw new CardException("无此卡记录"); 
 			}
 			
 			if(!IDGenerator.enableCard(connection, rfidcode)){
 				RET = 2;
-				throw new Exception("此卡未激活"); 
+				throw new CardException("此卡未激活"); 
 			}
 			
 			int cardJobId = IDGenerator.getNextID(connection,"CardJob");
@@ -141,6 +141,9 @@ public class HandPosAction implements Action {
 			pstmt.execute();
 			
 			RET=0;
+			
+        }catch (CardException e) {
+			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());
 		}catch (Exception e) {
 			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());
 			RET=3;
