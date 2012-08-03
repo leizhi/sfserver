@@ -74,7 +74,7 @@ public class HandPosAction implements Action {
 	public int processAuth(String userName,String password){
 		Connection connection=null;
         PreparedStatement pstmt = null;
-        int userId=0;
+        int userId=-1;
         
         try {
         	if(StringUtils.isNull(userName)){
