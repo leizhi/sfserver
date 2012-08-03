@@ -164,7 +164,7 @@ public class HandPosAction implements Action {
 		String response = "";
 		
 		try{
-			if(getUserId(userName)<0)
+			if(getUserId(userName)<1)
 				throw new NullPointerException("*1#");//无此用户
 			
 			int userId = processAuth(userName,userPassword);
