@@ -137,6 +137,9 @@ public class HandPosAction implements Action {
 				throw new CardException("无此用户"); 
 			}
 			
+			if(log.isDebugEnabled()) log.debug("userName:"+userName);
+			if(log.isDebugEnabled()) log.debug("userId:"+userId);
+
 			int cardJobId = IDGenerator.getNextID(connection,"CardJob");
 			pstmt.setInt(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(AbstractSQL.dtformat.parse(dateTime).getTime()));
@@ -187,6 +190,7 @@ public class HandPosAction implements Action {
 				String[] parameter = record[i].split(",");
 				
 				rfid = parameter[0].trim();
+				
 				saveCardJob = saveCardJob(parameter[1].trim(),parameter[2].trim(),parameter[3].trim());
 				
 				if(saveCardJob!=0){
