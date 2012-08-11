@@ -22,7 +22,7 @@ public class HandPosAction implements Action {
 	 */
 	private static Log log = LogFactory.getLog(HandPosAction.class);
 
-	private static final String EXISTS_USER="SELECT count(*) FROM User WHERE name=?";
+	private static final String QUERY_USER_ID="SELECT id FROM User WHERE name=?";
 
 	private static final String LOGIN="SELECT id,name,branchId FROM  User WHERE  name=? AND password=?";
 
@@ -37,22 +37,20 @@ public class HandPosAction implements Action {
 	public int getUserId(String userName){
 		Connection connection=null;
         PreparedStatement pstmt = null;
-        int userId=-1;
-        
+        int userId = -1;
         try {
     		if(StringUtils.isNull(userName)){
     			throw new NullPointerException("请输入用户名");
     		}
     		
 			connection = DbConnectionManager.getConnection();
-			pstmt = connection.prepareStatement(EXISTS_USER);
+			pstmt = connection.prepareStatement(QUERY_USER_ID);
             pstmt.setString(1, userName);
             
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
             	userId = rs.getInt(1);
             }
-            
 		}catch (NullPointerException e) {
 			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
 		}catch (SQLException e) {
@@ -133,11 +131,17 @@ public class HandPosAction implements Action {
 				throw new CardException("此卡未激活"); 
 			}
 			
+			int userId=getUserId(userName);
+			if(userId<0){
+				RET = 3;
+				throw new CardException("无此用户"); 
+			}
+			
 			int cardJobId = IDGenerator.getNextID(connection,"CardJob");
 			pstmt.setInt(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(AbstractSQL.dtformat.parse(dateTime).getTime()));
 			pstmt.setInt(3, cardId);
-			pstmt.setInt(4, getUserId(userName));
+			pstmt.setInt(4, userId);
 			pstmt.execute();
 			
 			RET=0;
@@ -164,7 +168,7 @@ public class HandPosAction implements Action {
 		String response = "";
 		
 		try{
-			if(getUserId(userName)<1)
+			if(getUserId(userName)<0)
 				throw new NullPointerException("*1#");//无此用户
 			
 			int userId = processAuth(userName,userPassword);
