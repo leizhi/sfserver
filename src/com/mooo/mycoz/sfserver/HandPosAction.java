@@ -24,7 +24,7 @@ public class HandPosAction implements Action {
 
 	private static final String QUERY_USER_ID="SELECT id FROM User WHERE name=?";
 
-	private static final String LOGIN="SELECT id,name,branchId FROM  User WHERE  name=? AND password=?";
+	private static final String LOGIN="SELECT id,name FROM  User WHERE  name=? AND password=?";
 
 	private static final String REGISTER_CARD="SELECT COUNT(id) FROM Card WHERE rfidcode=?";
 
