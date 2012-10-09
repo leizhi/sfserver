@@ -24,7 +24,7 @@
 	</appender>
 
     <!-- The root for struts -->
-    <category name="com.mooo.mycoz.sfserver" additivity="false">
+    <category name="com.mooo.mycoz.socket" additivity="false">
         <priority value="debug"/>
         <appender-ref ref="sfserverLog"/>
     </category>

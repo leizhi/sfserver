@@ -1,4 +1,4 @@
-package com.mooo.mycoz.sfserver;
+package com.mooo.mycoz.socket.sfserver;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -688,7 +688,7 @@ public class HandPosAction implements Action {
         return response += "#";
 	}
 	
-	private static final String SEARCH_WINERYS="SELECT w.definition FROM Winery w,WineryMap wm WHERE wm.userId=? ORDER BY w.id";
+	private static final String SEARCH_WINERYS="SELECT w.definition FROM Winery w,WineryMap wm WHERE wm.wineryId=w.id AND wm.userId=? ORDER BY w.id";
 
 	public synchronized String searchWinerys(String  userId){
 		String response = "*";
@@ -704,7 +704,7 @@ public class HandPosAction implements Action {
 			ResultSet result = pstmt.executeQuery();
 			
 			String winerys="";
-			if(result.next()){
+			while(result.next()){
 				
 				if(winerys.equals(""))
 					winerys = ";"+result.getString(1);
@@ -713,6 +713,51 @@ public class HandPosAction implements Action {
 			}
 
 			response +="0;"+Action.SEARCH_WINERYS+winerys;
+			
+		} catch (Exception e) {
+			response +="1;"+e.getMessage();
+			System.out.println("Exception="+e.getMessage());
+		}finally{
+
+			try {
+				pstmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		
+        return response += "#";
+	}
+	
+	private static final String SEARCH_CARD_TYPES="SELECT cardTypeName FROM wineShared.CardType ORDER BY id";
+
+	public synchronized String searchCardTypes(){
+		String response = "*";
+
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+
+		try{
+			conn = DbConnectionManager.getConnection();
+			pstmt = conn.prepareStatement(SEARCH_CARD_TYPES);
+			ResultSet result = pstmt.executeQuery();
+			
+			String cardTypes="";
+			while(result.next()){
+				
+				if(cardTypes.equals(""))
+					cardTypes = ";"+result.getString(1);
+				else
+					cardTypes += ","+result.getString(1);
+			}
+
+			response +="0;"+Action.SEARCH_CARD_TYPES+cardTypes;
 			
 		} catch (Exception e) {
 			response +="1;"+e.getMessage();
@@ -797,6 +842,12 @@ public class HandPosAction implements Action {
 
 					break;
 				case Action.SEARCH_CARD_TYPES:
+					if(args.length !=1){
+						response = "参数不正确";
+				    }
+					
+					response = searchCardTypes();
+
 					break;
 				case Action.SEARCH_WINERYS:
 					if(args.length !=2){

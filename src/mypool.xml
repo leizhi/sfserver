@@ -2,7 +2,7 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
 <comment>System</comment>
-<entry key="SFServer.action">com.mooo.mycoz.sfserver.HandPosAction</entry>
+<entry key="SFServer.action">com.mooo.mycoz.socket.sfserver.HandPosAction</entry>
 
 <!-- configure mysql database -->
  

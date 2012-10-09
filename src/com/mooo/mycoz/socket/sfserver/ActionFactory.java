@@ -1,11 +1,11 @@
-package com.mooo.mycoz.sfserver;
+package com.mooo.mycoz.socket.sfserver;
 
 import com.mooo.mycoz.db.DbConfig;
 
 public class ActionFactory {
 	private static Object initLock = new Object();
 	
-	private static String className = "com.mooo.mycoz.sfwine.HandPosAction";
+	private static String className = "com.mooo.mycoz.socket.sfserver.HandPosAction";
 	private static Action factory = null;
 	
 	public static Action getInstance() {

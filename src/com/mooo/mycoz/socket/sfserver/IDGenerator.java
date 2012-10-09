@@ -1,4 +1,4 @@
-package com.mooo.mycoz.sfserver;
+package com.mooo.mycoz.socket.sfserver;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

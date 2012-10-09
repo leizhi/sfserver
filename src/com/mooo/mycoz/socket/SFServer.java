@@ -13,7 +13,7 @@ import java.util.Vector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.mooo.mycoz.sfserver.ActionFactory;
+import com.mooo.mycoz.socket.sfserver.ActionFactory;
 
 public class SFServer{
 	private static Log log = LogFactory.getLog(SFServer.class);

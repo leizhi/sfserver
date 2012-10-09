@@ -1,4 +1,4 @@
-package com.mooo.mycoz.sfserver;
+package com.mooo.mycoz.socket.sfserver;
 
 public interface Action {
 	

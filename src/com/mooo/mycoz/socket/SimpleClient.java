@@ -70,10 +70,8 @@ public class SimpleClient {
 					if(log.isDebugEnabled())log.debug("write end/read begin expendsTime:"+expendsTime+"\t in.available():"+in.available());
 	
 					// read do
-	//				if(buffer!=null)
 					buffer=read.readLine().trim();
-					
-//					print.println(buffer);
+					System.out.println(buffer);
 	
 					finishTime = System.currentTimeMillis();
 					hours = (finishTime - startTime) / 1000 / 60 / 60;
