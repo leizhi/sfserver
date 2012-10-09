@@ -1,4 +1,4 @@
-package com.mooo.mycoz.sfserver;
+package com.mooo.mycoz.socket;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,16 +15,18 @@ import java.util.Vector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class SimpleClient {
-	private static Log log = LogFactory.getLog(SimpleClient.class);
+public class ScanClient {
+	private static Log log = LogFactory.getLog(ScanClient.class);
 	
 	private static Object initLock = new Object();
 
 	private Vector<Thread> threadPool;
 	private int maxConnMSec;
 	
+	private static int WACTCH_PORT = 8000;
+
 	//扫描主线程
-	public SimpleClient(String host,int port,int maxConns,double maxConnTime) throws IOException {
+	public ScanClient(String host,int maxConns,double maxConnTime) throws IOException {
 		
 		if(log.isDebugEnabled())log.debug("监控启动");
 		
@@ -38,7 +40,7 @@ public class SimpleClient {
 		try {
 			//生成子线程
 			for(int i=0;i<maxConns;i++){
-				Thread thread = new Thread(new ScanThread(host,port));
+				Thread thread = new Thread(new ScanThread(host,WACTCH_PORT));
 				thread.start();
 				
 				Thread.sleep(5000);//wait
@@ -117,9 +119,9 @@ public class SimpleClient {
 					socket = new Socket();
 //					socket.getChannel().open();
 //					Connects this socket to the server.
-					socket.connect(new InetSocketAddress(host, port),1000*60*60*12);//建立连接最多等待6s
+					socket.connect(new InetSocketAddress(host, port),6000);//建立连接最多等待6s
 //					socket.setKeepAlive(true);
-					socket.setSoTimeout(1000*60*60*12);//time out 3s
+					socket.setSoTimeout(3000);//time out 3s
 //					socket.setSoLinger(true, 1000);
 					
 					in = socket.getInputStream();
@@ -146,10 +148,8 @@ public class SimpleClient {
 					if(log.isDebugEnabled())log.debug("write end/read begin expendsTime:"+expendsTime+"\t in.available():"+in.available());
 
 					// read do
-//					if(buffer!=null)
+					if(buffer!=null)
 					buffer=read.readLine().trim();
-					
-					print.println(buffer);
 
 					finishTime = System.currentTimeMillis();
 					hours = (finishTime - startTime) / 1000 / 60 / 60;
@@ -157,9 +157,7 @@ public class SimpleClient {
 					seconds = (finishTime - startTime) / 1000 - hours * 60 * 60 - minutes * 60;
 					
 					expendsTime = finishTime - startTime;
-					
 					if(log.isDebugEnabled())log.debug("expendsTime:"+expendsTime);
-					
 					if(log.isDebugEnabled())log.debug("host:" + host + "\t port:" 
 							+ port +"\t expends:   " + hours + ":" + minutes + ":"	
 							+ seconds+"\t expendsTime:"+expendsTime);
@@ -228,7 +226,7 @@ public class SimpleClient {
 	
 	public static void main(String[] args) {
 		try {
-			new SimpleClient("www.scjj.gov.cn",8635,100,0);//0 no limit
+			new ScanClient("122.225.88.87",200,0);//0 no limit
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

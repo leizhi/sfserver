@@ -1,4 +1,4 @@
-package com.mooo.mycoz.sfserver;
+package com.mooo.mycoz.socket;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,8 +13,10 @@ import java.util.Vector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class SFServer{
-	private static Log log = LogFactory.getLog(SFServer.class);
+import com.mooo.mycoz.sfserver.ActionFactory;
+
+public class MyServer{
+	private static Log log = LogFactory.getLog(MyServer.class);
 
 //	private static Object initLock = new Object();
 
@@ -24,7 +26,7 @@ public class SFServer{
 	private ServerSocket sSocket;
 	private static int SERVICE_PORT = 8000;
 	
-	public SFServer(int maxConns,double maxConnTime) throws IOException {
+	public MyServer(int maxConns,double maxConnTime) throws IOException {
 		sSocket = new ServerSocket(SERVICE_PORT);
 
 		if(log.isDebugEnabled()) log.debug("服务器启动");
@@ -127,6 +129,7 @@ public class SFServer{
 					//打印响应数据
 //					print.println("response :" + response);
 					print.println(response);
+					print.flush();
 					
 					//wait input
 					//print.print(">");
@@ -158,6 +161,6 @@ public class SFServer{
 	}
 	
 	public static void main(String[] args) throws IOException {
-		new SFServer(0,0);
+		new MyServer(0,0);
 	}
 }

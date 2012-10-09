@@ -7,10 +7,12 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.Calendar;
+import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.mooo.mycoz.common.CalendarUtils;
 import com.mooo.mycoz.common.StringUtils;
 import com.mooo.mycoz.db.pool.DbConnectionManager;
 import com.mooo.mycoz.db.sql.AbstractSQL;
@@ -34,6 +36,8 @@ public class HandPosAction implements Action {
 
 	private static final String ADD_CARD_PATROL_LOG="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId) VALUES(?,?,?,?,3)";
 
+	//sfcomm call
+	
 	public int getUserId(String userName){
 		Connection connection=null;
         PreparedStatement pstmt = null;
@@ -216,57 +220,6 @@ public class HandPosAction implements Action {
 		return response;
 	}
 	
-	public String forward(String requestLine) {
-//		String[] args = request.split(" +\n*");
-		String response = null;
-
-		try{
-			if(!requestLine.startsWith("*")||!requestLine.endsWith("#")){
-				response = "数据格式不正确";
-			}
-			
-			String doRequest=requestLine.substring(requestLine.indexOf("*")+1,
-					requestLine.lastIndexOf("#"));
-
-		    String[] args=doRequest.split(";");
-		    
-		    if(log.isDebugEnabled()) log.debug("length:"+args.length);
-		    
-			for(int i=0;i<args.length;i++){
-				args[i]=args[i].trim();
-				if(log.isDebugEnabled()) log.debug(args[i]);
-			}
-			
-			int cmd = Integer.parseInt(args[0]);//命令
-
-			 switch(cmd){
-				case Action.SEARCH_CARD:
-					if(args.length !=4){
-						response = "参数不正确";
-				    }
-					
-					response = cardPatrol(args[1],args[2],args[3]);
-					
-					break;
-				case Action.ACTION_SYN:
-					
-					if(args.length !=4){
-						response = "参数不正确";
-				    }
-					
-					response = synchronize(args[1],args[2],args[3]);
-					
-					break;
-				default:
-					break;
-			   }
-		}catch(Exception e){
-			response = "数据格式不正确";
-		}
-		
-		return response;
-	}
-	
 	public String cardPatrol(String userName,String userPassword,String rfidcode){
 		String response = "*";
 
@@ -367,5 +320,508 @@ public class HandPosAction implements Action {
 		}
 		
 		return response += "#";
+	}
+	
+	//Card
+	private static final String ADD_CARD="INSERT INTO Card(id,rfidcode,uuid,wineryId) VALUES(?,?,?,?)";
+	private static final String ADD_CARD_TRACK="INSERT INTO CardTrack(id,cardId,userId,trackDate,statusId,isLast) VALUES(?,?,?,?,1,'Yes')";
+
+	public String saveCard(String userId,String rfidcode,String uuid,String wineryName) throws CardException{
+		if(log.isDebugEnabled()) log.debug("save Card start");
+		String response = "*";
+
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		try{
+			conn = DbConnectionManager.getConnection();
+			conn.setAutoCommit(false);
+			
+			pstmt = conn.prepareStatement(ADD_CARD);
+			long cardId = IDGenerator.getNextID(conn,"Card");
+			pstmt.setLong(1, cardId);
+			pstmt.setString(2, rfidcode);
+			pstmt.setString(3, uuid);
+
+			int wineryId = IDGenerator.getId("Winery", "definition", wineryName);
+			pstmt.setInt(4, wineryId);
+			pstmt.execute();
+			
+			pstmt = conn.prepareStatement(ADD_CARD_TRACK);
+			pstmt.setLong(1, IDGenerator.getNextID(conn,"CardTrack"));
+			pstmt.setLong(2, cardId);
+			pstmt.setLong(3, new Long(userId));
+			pstmt.setTimestamp(4,new Timestamp(new Date().getTime()));
+			pstmt.execute();
+			
+			conn.commit();
+			if(log.isDebugEnabled()) log.debug("save finlsh");
+    		
+			response +="0,"+Action.SAVE_CARD;
+		} catch (Exception e) {
+			System.out.println("CardDBObject Exception="+e.getMessage());
+			try {
+				conn.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			response +="1,"+e.getMessage();
+
+			e.printStackTrace();
+		}finally{
+
+			try {
+				if(pstmt != null)
+					pstmt.close();
+				if(conn != null)
+					conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return response += "#";
+	}
+	
+	private static final String EXISTS_USER="SELECT count(*) FROM User WHERE name=?";
+	
+	public static String processLogin(String userName,String userPassWord) {
+		String response = "*";
+
+		Connection connection=null;
+        PreparedStatement pstmt = null;
+        int count=0;
+        try {
+
+    		if(StringUtils.isNull(userName))
+    			throw new NullPointerException("请输入用户名");
+    		
+    		if(StringUtils.isNull(userPassWord))
+    			throw new NullPointerException("请输入密码");
+    		
+			connection = DbConnectionManager.getConnection();
+			pstmt = connection.prepareStatement(EXISTS_USER);
+            pstmt.setString(1, userName);
+            
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+            	count = rs.getInt(1);
+            }
+            
+            if(count < 1)
+    			throw new NullPointerException("无此用户");
+            
+            count=0;
+            
+            pstmt = connection.prepareStatement(LOGIN);
+            pstmt.setString(1, userName);
+            pstmt.setString(2, userPassWord);
+
+            rs = pstmt.executeQuery();
+        	int userId = -1;
+            while (rs.next()) {
+            	userId = rs.getInt(1);
+            }
+            
+            if(userId < 0)
+    			throw new NullPointerException("用户和密码不匹配");
+            
+            response +="0;"+Action.ACTION_LOGIN+";"+userId;
+		}catch (Exception e) {
+			response +="1;"+e.getMessage();
+			
+			e.printStackTrace();
+	   }finally {
+			try {
+				if(pstmt != null)
+					pstmt.close();
+				if(connection != null)
+					connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+		}
+
+        return response += "#";
+	}
+	
+	private static final String ADD_USER_INFO="INSERT INTO UserInfo(id,uuid) VALUES(?,?)";
+
+	private static final String ADD_USER="INSERT INTO User(id,name,password,userInfoId,branchId) VALUES(?,?,?,?,1)";
+
+	public void processRegister(String userName,String userPassWord,String serialNumber){
+		if(log.isDebugEnabled()) log.debug("processRegister");	
+
+		Connection connection=null;
+        PreparedStatement pstmt = null;
+        long count=0;
+        try {
+			connection = DbConnectionManager.getConnection();
+			connection.setAutoCommit(false);
+			
+			pstmt = connection.prepareStatement(EXISTS_USER);
+            pstmt.setString(1, userName);
+            
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+            	count = rs.getInt(1);
+            }
+            
+    		if(log.isDebugEnabled()) log.debug("count:"+count);	
+
+            if(count > 0)
+    			throw new NullPointerException("此用户已注册");
+            
+            pstmt = connection.prepareStatement(EXISTS_CARD);
+            pstmt.setString(1, serialNumber);
+            
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+            	count = rs.getInt(1);
+            }
+            
+    		if(log.isDebugEnabled()) log.debug("count:"+count);	
+
+            if(count > 0)
+    			throw new NullPointerException("此卡已注册");
+            
+            pstmt = connection.prepareStatement(ADD_USER_INFO);
+            int userInfoId = IDGenerator.getNextID(connection,"UserInfo");
+            pstmt.setLong(1, userInfoId);
+            pstmt.setString(2, StringUtils.hash(serialNumber));
+            pstmt.execute();
+            
+            pstmt = connection.prepareStatement(ADD_USER);
+            pstmt.setLong(1, IDGenerator.getNextID(connection,"UserInfo"));
+            pstmt.setString(2, userName);
+            pstmt.setString(3, StringUtils.hash(userPassWord));
+            pstmt.setInt(4, userInfoId);
+            pstmt.execute();
+
+            connection.commit();
+		}catch (NullPointerException e) {
+			if(connection != null)
+				try {
+					connection.rollback();
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
+		}catch (SQLException e) {
+				if(connection != null)
+					try {
+						connection.rollback();
+					} catch (SQLException e1) {
+						e1.printStackTrace();
+					}
+			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
+		}catch (Exception e) {
+				if(connection != null)
+					try {
+						connection.rollback();
+					} catch (SQLException e1) {
+						e1.printStackTrace();
+					}
+			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
+		}finally {
+			try {
+				if(pstmt != null)
+					pstmt.close();
+				if(connection != null)
+					connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public synchronized static String getKey(String value) {
+		
+		Connection connection=null;
+        PreparedStatement pstmt = null;
+        String result = null;
+        try {
+        	String sql = "SELECT abbreviation FROM Winery WHERE definition=?";
+        	
+			connection = DbConnectionManager.getConnection();
+            pstmt = connection.prepareStatement(sql);
+            pstmt.setString(1, value);
+            
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+            	result = rs.getString(1);
+            }
+		}catch (SQLException e) {
+			e.printStackTrace();
+	   }finally {
+			try {
+				if(pstmt != null)
+					pstmt.close();
+				if(connection != null)
+					connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+		}
+        return result;
+	}
+	
+	private static final String SELECT_MAX_BY_LIKE="SELECT MAX(rfidcode) nowCode FROM Card WHERE rfidcode LIKE ?";
+
+	private static final String FIND_CARD="SELECT count(*) FROM Card WHERE uuid=?";
+	
+	public synchronized static String nextRfidCode(String winery) {
+		String response = "*";
+
+		String nextCode=null;
+		
+		String wineryCode=null;
+		wineryCode = getKey(winery);
+		
+		if(wineryCode==null || wineryCode.length()>6){
+			wineryCode="000000";
+		}else if(wineryCode.length()>0 && wineryCode.length()<6){
+			for(int i=wineryCode.length();i<6;i++){
+				wineryCode +="0";
+			}
+		}
+		
+		String nowDate = CalendarUtils.dformat(Calendar.getInstance().getTime());
+		
+		if(nowDate==null || nowDate.length()!=6)
+			nowDate="000000";
+		
+		String prefix = wineryCode+nowDate;
+		
+		String nextNumber = "0000";
+		
+		Connection connection=null;
+        PreparedStatement pstmt = null;
+        try {
+			connection = DbConnectionManager.getConnection();
+            pstmt = connection.prepareStatement(SELECT_MAX_BY_LIKE);
+            pstmt.setString(1, prefix+"%");
+            
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+            	nextCode = rs.getString(1);
+            }
+            
+            if(nextCode!=null && nextCode.length()==16){
+            	nextNumber = nextCode.substring(12);
+            	
+            	int number = new Integer(nextNumber);
+            	
+            	number++;
+            	
+            	if(number<10){
+            		nextNumber = "000"+number;
+            	}else if(number<100){
+            		nextNumber = "00"+number;
+            	}else if(number<1000){
+            		nextNumber = "0"+number;
+            	}else{
+            		nextNumber = ""+number;
+            	}
+            }
+            
+            nextCode = prefix+nextNumber;
+			
+            response +="0;"+Action.NEXT_RFID_CODE+";"+nextCode;
+		}catch (Exception e) {
+			response +="1;"+e.getMessage();
+			e.printStackTrace();
+	   }finally {
+			try {
+				if(pstmt != null)
+					pstmt.close();
+				if(connection != null)
+					connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+		}
+        return response += "#";
+	}
+	
+	public synchronized String existCard(String  uuid){
+		String response = "*";
+
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+
+		try{
+			conn = DbConnectionManager.getConnection();
+			pstmt = conn.prepareStatement(FIND_CARD);
+			pstmt.setString(1, uuid);
+			
+			ResultSet result = pstmt.executeQuery();
+			int count = 0;
+			
+			if(result.next()){
+				count = result.getInt(1);
+			}
+			
+			if(count > 0)
+    			throw new NullPointerException("此卡已注册");
+           
+			response +="0;"+Action.EXIST_CARD;
+		} catch (Exception e) {
+			response +="1;"+e.getMessage();
+			System.out.println("Exception="+e.getMessage());
+		}finally{
+
+			try {
+				pstmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		
+        return response += "#";
+	}
+	
+	private static final String SEARCH_WINERYS="SELECT w.definition FROM Winery w,WineryMap wm WHERE wm.userId=? ORDER BY w.id";
+
+	public synchronized String searchWinerys(String  userId){
+		String response = "*";
+
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+
+		try{
+			conn = DbConnectionManager.getConnection();
+			pstmt = conn.prepareStatement(SEARCH_WINERYS);
+			pstmt.setInt(1, new Integer(userId));
+			
+			ResultSet result = pstmt.executeQuery();
+			
+			String winerys="";
+			if(result.next()){
+				
+				if(winerys.equals(""))
+					winerys = ";"+result.getString(1);
+				else
+					winerys += ","+result.getString(1);
+			}
+
+			response +="0;"+Action.SEARCH_WINERYS+winerys;
+			
+		} catch (Exception e) {
+			response +="1;"+e.getMessage();
+			System.out.println("Exception="+e.getMessage());
+		}finally{
+
+			try {
+				pstmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		
+        return response += "#";
+	}
+	
+	public String forward(String requestLine) {
+//		String[] args = request.split(" +\n*");
+		String response = null;
+		try{
+			if(!requestLine.startsWith("*")||!requestLine.endsWith("#")){
+				response = "数据格式不正确";
+			}
+			
+			String doRequest=requestLine.substring(requestLine.indexOf("*")+1,
+					requestLine.lastIndexOf("#"));
+
+		    String[] args=doRequest.split(";");
+		    
+		    if(log.isDebugEnabled()) log.debug("length:"+args.length);
+		    
+			for(int i=0;i<args.length;i++){
+				args[i]=args[i].trim();
+				if(log.isDebugEnabled()) log.debug(args[i]);
+			}
+			
+			int cmd = Integer.parseInt(args[0]);//命令
+
+			 switch(cmd){
+				case Action.SEARCH_CARD:
+					if(args.length !=4){
+						response = "参数不正确";
+				    }
+					
+					response = cardPatrol(args[1],args[2],args[3]);
+					
+					break;
+				case Action.ACTION_SYN:
+					
+					if(args.length !=4){
+						response = "参数不正确";
+				    }
+					
+					response = synchronize(args[1],args[2],args[3]);
+					break;
+				case Action.EXIST_CARD:
+					if(args.length !=2){
+						response = "参数不正确";
+				    }
+					
+					response = existCard(args[1]);
+					break;
+				case Action.NEXT_RFID_CODE:
+					if(args.length !=2){
+						response = "参数不正确";
+				    }
+					
+					response = nextRfidCode(args[1]);
+					break;
+				case Action.SAVE_CARD:
+					if(args.length !=5){
+						response = "参数不正确";
+				    }
+					
+					response = saveCard(args[1],args[2],args[3],args[4]);
+
+					break;
+				case Action.SEARCH_CARD_TYPES:
+					break;
+				case Action.SEARCH_WINERYS:
+					if(args.length !=2){
+						response = "参数不正确";
+				    }
+					
+					response = searchWinerys(args[1]);
+					
+					break;
+				case Action.ACTION_LOGIN:
+					if(args.length !=3){
+						response = "参数不正确";
+				    }
+					
+					response=processLogin(args[1],args[2]);
+					
+					break;
+				default:
+					break;
+			   }
+		}catch(Exception e){
+			response = "请求处理异常";
+			e.printStackTrace();
+		}
+		
+		return response;
 	}
 }
