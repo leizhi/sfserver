@@ -15,8 +15,8 @@ import org.apache.commons.logging.LogFactory;
 
 import com.mooo.mycoz.sfserver.ActionFactory;
 
-public class MyServer{
-	private static Log log = LogFactory.getLog(MyServer.class);
+public class SFServer{
+	private static Log log = LogFactory.getLog(SFServer.class);
 
 //	private static Object initLock = new Object();
 
@@ -26,7 +26,7 @@ public class MyServer{
 	private ServerSocket sSocket;
 	private static int SERVICE_PORT = 8000;
 	
-	public MyServer(int maxConns,double maxConnTime) throws IOException {
+	public SFServer(int maxConns,double maxConnTime) throws IOException {
 		sSocket = new ServerSocket(SERVICE_PORT);
 
 		if(log.isDebugEnabled()) log.debug("服务器启动");
@@ -161,6 +161,6 @@ public class MyServer{
 	}
 	
 	public static void main(String[] args) throws IOException {
-		new MyServer(0,0);
+		new SFServer(0,0);
 	}
 }
