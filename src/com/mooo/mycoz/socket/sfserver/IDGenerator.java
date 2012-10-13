@@ -75,7 +75,7 @@ public class IDGenerator {
 		try{
         	if(connection==null){
         		notConn = true;
-        		DbConnectionManager.getConnection();
+        		connection=DbConnectionManager.getConnection();
         	}
         	
 			pstmt = connection.prepareStatement(ENABLE_CARD);
@@ -113,22 +113,22 @@ public class IDGenerator {
 		int id = -1;
 		String sql = "SELECT id FROM "+table+" WHERE "+fieldName+"=?";
 		try{
+			
         	if(connection==null){
         		notConn = true;
-        		DbConnectionManager.getConnection();
+        		connection=DbConnectionManager.getConnection();
         	}
-        	
-			pstmt = connection.prepareStatement(sql);
+
+        	pstmt = connection.prepareStatement(sql);
 			pstmt.setString(1, fieldValue);
 			
-			if(log.isDebugEnabled()) log.debug("sql:"+sql);
-
 			ResultSet result = pstmt.executeQuery();
 			if(result.next()){
 				id = result.getInt(1);
 			}
 		} catch (Exception e) {
 			if(log.isDebugEnabled()) log.debug("Exception="+e.getMessage());
+			e.printStackTrace();
 		}finally{
 
 			try {
@@ -148,7 +148,7 @@ public class IDGenerator {
 	}
 	
 	public synchronized static int getId(String table,String fieldName,String fieldValue){
-		return getId( table, fieldName, fieldValue);
+		return getId(null,table, fieldName, fieldValue);
 	}
 	
 	public synchronized static boolean find(String table,String fieldName,String fieldValue){

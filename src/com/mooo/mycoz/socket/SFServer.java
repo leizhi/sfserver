@@ -94,7 +94,8 @@ public class SFServer{
 		
 		public SessionThread(Socket socket) throws IOException {
 			this.socket = socket;
-
+			this.socket.setKeepAlive(true);
+			
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
 
