@@ -196,7 +196,7 @@ public class HandPosAction implements Action {
 
 			int cardJobId = IDGenerator.getNextID(connection,"CardJob");
 			pstmt.setInt(1, cardJobId);
-			pstmt.setTimestamp(2, new Timestamp(CalendarUtils.dparse(dateTime).getTime()));
+			pstmt.setTimestamp(2, new Timestamp(CalendarUtils.dtparse(dateTime).getTime()));
 			pstmt.setInt(3, cardId);
 			pstmt.setInt(4, userId);
 			pstmt.execute();
