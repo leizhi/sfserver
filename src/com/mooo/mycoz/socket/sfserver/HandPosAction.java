@@ -37,7 +37,7 @@ public class HandPosAction implements Action {
 
 	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material,card.branchId FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
-	private static final String ADD_CARD_PATROL_LOG="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId,spotNormal,cardNormal) VALUES(?,?,?,?,3,'Y','Y')";
+	private static final String ADD_CARD_JOB="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId,spotNormal,cardNormal) VALUES(?,?,?,?,?,'Y','Y')";
 
 	private static final String EXISTS_CARD_PATROL_LOG="SELECT COUNT(id) FROM CardJob WHERE jobTypeId=3   AND cardId=?  AND userId=? AND jobDate=?";
 
@@ -168,7 +168,7 @@ public class HandPosAction implements Action {
         int RET=-1;
         try {
 			connection = DbConnectionManager.getConnection();
-			pstmt = connection.prepareStatement(ADD_CARD_PATROL_LOG);
+			pstmt = connection.prepareStatement(ADD_CARD_JOB);
 			
 			int cardId = IDGenerator.getId(connection,"Card","rfidcode",rfidcode);
 			if(cardId<0){
@@ -199,6 +199,7 @@ public class HandPosAction implements Action {
 			pstmt.setTimestamp(2, new Timestamp(CalendarUtils.dtparse(dateTime).getTime()));
 			pstmt.setInt(3, cardId);
 			pstmt.setInt(4, userId);
+			pstmt.setInt(5, 3);
 			pstmt.execute();
 			
 			RET=0;
@@ -319,7 +320,7 @@ public class HandPosAction implements Action {
             	str += "原料:"+rs.getString(8);            
             }
             
-			pstmt = conn.prepareStatement(ADD_CARD_PATROL_LOG);
+			pstmt = conn.prepareStatement(ADD_CARD_JOB);
 			
 			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
 			if(log.isDebugEnabled()) log.debug("cardJobId:"+cardJobId);
@@ -336,6 +337,7 @@ public class HandPosAction implements Action {
 			
 			pstmt.setInt(3, cardId);
 			pstmt.setInt(4, processAuth(userName,userPassword));
+			pstmt.setInt(5, 3);
 			pstmt.execute();
 			
 			conn.commit();
@@ -372,7 +374,7 @@ public class HandPosAction implements Action {
 	
 	//Card
 	private static final String ADD_CARD="INSERT INTO Card(id,rfidcode,uuid,wineryId) VALUES(?,?,?,?)";
-	private static final String ADD_CARD_TRACK="INSERT INTO CardTrack(id,cardId,userId,trackDate,statusId,isLast) VALUES(?,?,?,?,1,'Yes')";
+//	private static final String ADD_CARD_TRACK="INSERT INTO CardTrack(id,cardId,userId,trackDate,statusId,isLast) VALUES(?,?,?,?,1,'Yes')";
 
 	public String saveCard(String userId,String rfidcode,String uuid,String wineryName){
 		if(log.isDebugEnabled()) log.debug("save Card start");
@@ -394,11 +396,14 @@ public class HandPosAction implements Action {
 			pstmt.setInt(4, wineryId);
 			pstmt.execute();
 			
-			pstmt = conn.prepareStatement(ADD_CARD_TRACK);
-			pstmt.setLong(1, IDGenerator.getNextID(conn,"CardTrack"));
-			pstmt.setLong(2, cardId);
-			pstmt.setLong(3, new Long(userId));
-			pstmt.setTimestamp(4,new Timestamp(new Date().getTime()));
+			pstmt = conn.prepareStatement(ADD_CARD_JOB);
+			
+			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
+			pstmt.setLong(1, cardJobId);
+			pstmt.setTimestamp(2, new Timestamp(new Date().getTime()));
+			pstmt.setLong(3, cardId);
+			pstmt.setLong(4, new Long(userId));
+			pstmt.setInt(5, 1);
 			pstmt.execute();
 			
 			conn.commit();
