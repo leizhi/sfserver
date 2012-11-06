@@ -25,6 +25,8 @@ public class HandPosAction implements Action {
 
 	private static final String QUERY_USER_ID="SELECT id FROM User WHERE name=?";
 
+	private static final String QUERY_BRANCH_ID="SELECT branchId FROM User WHERE id=?";
+
 	private static final String LOGIN="SELECT id,name FROM  User WHERE  name=? AND password=?";
 
 	private static final String EXISTS_CARD="SELECT count(*) FROM Card WHERE uuid=?";
@@ -37,7 +39,7 @@ public class HandPosAction implements Action {
 
 	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material,card.branchId FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
-	private static final String ADD_CARD_JOB="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId,spotNormal,cardNormal) VALUES(?,?,?,?,?,'Y','Y')";
+	private static final String ADD_CARD_JOB="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId,spotNormal,cardNormal,branchId) VALUES(?,?,?,?,?,'Y','Y',?)";
 
 	private static final String EXISTS_CARD_PATROL_LOG="SELECT COUNT(id) FROM CardJob WHERE jobTypeId=3   AND cardId=?  AND userId=? AND jobDate=?";
 
@@ -76,6 +78,37 @@ public class HandPosAction implements Action {
 			
 		}
 		return userId;
+	}
+	
+	public int getBranchId(int userId){
+		Connection connection=null;
+        PreparedStatement pstmt = null;
+        int branchId = -1;
+        try {
+			connection = DbConnectionManager.getConnection();
+			pstmt = connection.prepareStatement(QUERY_BRANCH_ID);
+            pstmt.setInt(1, userId);
+            
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+            	branchId = rs.getInt(1);
+            }
+		}catch (NullPointerException e) {
+			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
+		}catch (SQLException e) {
+			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
+	   }finally {
+			try {
+				if(pstmt != null)
+					pstmt.close();
+				if(connection != null)
+					connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+		}
+		return branchId;
 	}
 	
 	public int processAuth(String userName,String password){
@@ -186,11 +219,14 @@ public class HandPosAction implements Action {
 				RET = 3;
 				throw new CardException("无此用户"); 
 			}
+			
 			if(existsPatrol(cardId,userId,dateTime)){
 				RET = 4;
 				throw new CardException("已经上传"); 
 			}
 
+			int branchId = getBranchId(userId);
+			
 			if(log.isDebugEnabled()) log.debug("userName:"+userName);
 			if(log.isDebugEnabled()) log.debug("userId:"+userId);
 
@@ -200,6 +236,7 @@ public class HandPosAction implements Action {
 			pstmt.setInt(3, cardId);
 			pstmt.setInt(4, userId);
 			pstmt.setInt(5, 3);
+			pstmt.setInt(6, branchId);
 			pstmt.execute();
 			
 			RET=0;
@@ -319,7 +356,7 @@ public class HandPosAction implements Action {
             	str += "单位:"+rs.getString(7)+",";
             	str += "原料:"+rs.getString(8);            
             }
-            
+			
 			pstmt = conn.prepareStatement(ADD_CARD_JOB);
 			
 			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
@@ -335,11 +372,15 @@ public class HandPosAction implements Action {
 				throw new NullPointerException("无此卡记录"); 
 			}
 			
+			int userId=processAuth(userName,userPassword);
+			int branchId = getBranchId(userId);
+
 			pstmt.setInt(3, cardId);
 			pstmt.setInt(4, processAuth(userName,userPassword));
 			pstmt.setInt(5, 3);
+			pstmt.setInt(6, branchId);
 			pstmt.execute();
-			
+
 			conn.commit();
 			
     		response +="0,"+Action.SEARCH_CARD+","+str;
@@ -398,11 +439,17 @@ public class HandPosAction implements Action {
 			pstmt = conn.prepareStatement(ADD_CARD_JOB);
 			
 			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
+			
+			Integer lId=new Integer(userId);
+			
+			int branchId = getBranchId(lId);
+			
 			pstmt.setLong(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(new Date().getTime()));
 			pstmt.setLong(3, cardId);
-			pstmt.setLong(4, new Long(userId));
+			pstmt.setLong(4, lId);
 			pstmt.setInt(5, 1);
+			pstmt.setInt(6, branchId);
 			pstmt.execute();
 			
 			conn.commit();
