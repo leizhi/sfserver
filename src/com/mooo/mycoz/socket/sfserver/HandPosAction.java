@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -39,9 +38,13 @@ public class HandPosAction implements Action {
 
 	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material,card.branchId FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
-	private static final String ADD_CARD_JOB="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId,spotNormal,cardNormal,branchId) VALUES(?,?,?,?,?,'Y','Y',?)";
+	private static final String ADD_CARD_JOB="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId,branchId,processId,spotNormal,cardNormal) VALUES(?,?,?,?,?,?,0,'Y','Y')";
 
-	private static final String EXISTS_CARD_PATROL_LOG="SELECT COUNT(id) FROM CardJob WHERE jobTypeId=3   AND cardId=?  AND userId=? AND jobDate=?";
+	private static final String COUNT_PROCESS="SELECT COUNT(id) FROM CardJob WHERE cardId=? AND branchId=?";
+
+	private static final String UPDATE_CARD_JOB="UPDATE CardJob SET processId=? WHERE cardId=? AND branchId=? AND processId=0";
+
+	private static final String EXISTS_CARD_JOB="SELECT COUNT(id) FROM CardJob WHERE jobTypeId=3  AND processId=0 AND cardId=? AND branchId=? AND userId=? AND jobDate=?";
 
 	//sfcomm call
 	
@@ -154,24 +157,27 @@ public class HandPosAction implements Action {
 		return userId;
 	}
 	
-	public boolean existsPatrol(Integer cardId,Integer userId,String dateTime){
+	public boolean existsPatrol(Integer cardId,Integer branchId,Integer userId,String dateTime){
 		Connection connection=null;
         PreparedStatement pstmt = null;
         
         try {
 			connection = DbConnectionManager.getConnection();
 			
-			pstmt = connection.prepareStatement(EXISTS_CARD_PATROL_LOG);
+			pstmt = connection.prepareStatement(EXISTS_CARD_JOB);
             pstmt.setInt(1, cardId);
-            pstmt.setInt(2, userId);
-            pstmt.setTimestamp(3, new Timestamp(CalendarUtils.dparse(dateTime).getTime()));
+            pstmt.setInt(2, branchId);
+            pstmt.setInt(3, userId);
+            pstmt.setTimestamp(4, new Timestamp(CalendarUtils.dtparse(dateTime).getTime()));
             
             int count=-1;
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
             	count = rs.getInt(1);
             }
-            
+			
+            if(log.isDebugEnabled()) log.debug("count:"+count);
+
             if(count>0) return true;
             
 		}catch (NullPointerException e) {
@@ -195,13 +201,13 @@ public class HandPosAction implements Action {
 		return false;
 	}
 	
-	public int saveCardJob(String rfidcode,String userName,String dateTime) throws ParseException{
+	public int saveCardJob(String rfidcode,String userName,String dateTime){
 		Connection connection=null;
         PreparedStatement pstmt = null;
         int RET=-1;
         try {
 			connection = DbConnectionManager.getConnection();
-			pstmt = connection.prepareStatement(ADD_CARD_JOB);
+			connection.setAutoCommit(false);
 			
 			int cardId = IDGenerator.getId(connection,"Card","rfidcode",rfidcode);
 			if(cardId<0){
@@ -219,18 +225,36 @@ public class HandPosAction implements Action {
 				RET = 3;
 				throw new CardException("无此用户"); 
 			}
-			
-			if(existsPatrol(cardId,userId,dateTime)){
+			int branchId = getBranchId(userId);
+
+			if(existsPatrol(cardId,branchId,userId,dateTime)){
 				RET = 4;
 				throw new CardException("已经上传"); 
 			}
 
-			int branchId = getBranchId(userId);
-			
 			if(log.isDebugEnabled()) log.debug("userName:"+userName);
 			if(log.isDebugEnabled()) log.debug("userId:"+userId);
-
+			
+			pstmt = connection.prepareStatement(COUNT_PROCESS);
+			pstmt.setInt(1, cardId);
+			pstmt.setInt(2, branchId);
+            ResultSet rs = pstmt.executeQuery();
+            int processId = 0;
+            while (rs.next()) {
+            	processId = rs.getInt(1);
+            }
+            
+			pstmt = connection.prepareStatement(UPDATE_CARD_JOB);
+			pstmt.setInt(1, processId);
+			pstmt.setInt(2, cardId);
+			pstmt.setInt(3, branchId);
+			pstmt.execute();
+			
+			pstmt = connection.prepareStatement(ADD_CARD_JOB);
 			int cardJobId = IDGenerator.getNextID(connection,"CardJob");
+			
+			if(log.isDebugEnabled()) log.debug("cardJobId:"+cardJobId);
+
 			pstmt.setInt(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(CalendarUtils.dtparse(dateTime).getTime()));
 			pstmt.setInt(3, cardId);
@@ -239,15 +263,28 @@ public class HandPosAction implements Action {
 			pstmt.setInt(6, branchId);
 			pstmt.execute();
 			
-			RET=0;
+			connection.commit();
 			
+			RET=0;
         }catch (CardException e) {
+        	try {
+				connection.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
 			if(log.isErrorEnabled()) log.error("CardException:"+e.getMessage());
 		}catch (Exception e) {
+        	try {
+				connection.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
 			if(log.isErrorEnabled()) log.error("Exception:"+e.getMessage());
 			RET=3;
 	   }finally {
 			try {
+				connection.setAutoCommit(true);
+				
 				if(pstmt != null)
 					pstmt.close();
 				if(connection != null)
