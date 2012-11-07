@@ -30,9 +30,9 @@ public class HandPosAction implements Action {
 
 	private static final String EXISTS_CARD="SELECT count(*) FROM Card WHERE uuid=?";
 	
-	private static final String REGISTER_CARD="SELECT COUNT(id) FROM Card WHERE rfidcode=?";
+	private static final String REGISTER_CARD="SELECT COUNT(id) FROM Card WHERE rfidcode=? AND card.branchId=?";
 
-	private static final String ACTIVATE_CARD="SELECT card.id FROM Card card,WineJar wineJar WHERE wineJar.id=card.wineJarId AND rfidcode=?";
+	private static final String ACTIVATE_CARD="SELECT COUNT(card.id) FROM Card card,CardJob cardJob WHERE cardJob.cardId=card.id AND cardJob.branchId=card.branchId AND cardJob.jobTypeId=2 AND card.rfidcode=? AND card.branchId=?";
 
 	private static final String SELECT_MAX_BY_LIKE="SELECT MAX(rfidcode) nowCode FROM Card WHERE rfidcode LIKE ?";
 
@@ -212,12 +212,7 @@ public class HandPosAction implements Action {
 			int cardId = IDGenerator.getId(connection,"Card","rfidcode",rfidcode);
 			if(cardId<0){
 				RET = 1;
-				throw new CardException("无此卡记录"); 
-			}
-			
-			if(!IDGenerator.enableCard(connection, rfidcode)){
-				RET = 2;
-				throw new CardException("此卡未激活"); 
+				throw new CardException("无此标签记录"); 
 			}
 			
 			int userId=getUserId(userName);
@@ -226,10 +221,24 @@ public class HandPosAction implements Action {
 				throw new CardException("无此用户"); 
 			}
 			int branchId = getBranchId(userId);
+			
+			pstmt = connection.prepareStatement(ACTIVATE_CARD);
+			pstmt.setString(1, rfidcode);
+			pstmt.setInt(2, branchId);
+			ResultSet rs = pstmt.executeQuery();
+            int count = 0;
+            while (rs.next()) {
+            	count = rs.getInt(1);
+            }
+            
+            if(count<1){
+				RET = 2;
+            	throw new CardException("此标签未激活"); 
+            }
 
 			if(existsPatrol(cardId,branchId,userId,dateTime)){
 				RET = 4;
-				throw new CardException("已经上传"); 
+				throw new CardException("此标签已上传"); 
 			}
 
 			if(log.isDebugEnabled()) log.debug("userName:"+userName);
@@ -238,7 +247,7 @@ public class HandPosAction implements Action {
 			pstmt = connection.prepareStatement(COUNT_PROCESS);
 			pstmt.setInt(1, cardId);
 			pstmt.setInt(2, branchId);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             int processId = 0;
             while (rs.next()) {
             	processId = rs.getInt(1);
@@ -353,21 +362,29 @@ public class HandPosAction implements Action {
 		try{
 			conn = DbConnectionManager.getConnection();
 			conn.setAutoCommit(false);
+            
+			int userId=processAuth(userName,userPassword);
+			if(userId<0){
+				throw new CardException("无此用户"); 
+			}
+			int branchId = getBranchId(userId);
 			
 			pstmt = conn.prepareStatement(REGISTER_CARD);
 			pstmt.setString(1, rfidcode);
+			pstmt.setInt(2, branchId);
             ResultSet rs = pstmt.executeQuery();
-            int count = 0;
-            while (rs.next()) {
+			int count = 0;
+           
+			while (rs.next()) {
             	count = rs.getInt(1);
             }
-            
             if(count<1){
-            	throw new NullPointerException("此标签未授权"); 
+            	throw new CardException("此标签未授权"); 
             }
             
 			pstmt = conn.prepareStatement(ACTIVATE_CARD);
 			pstmt.setString(1, rfidcode);
+			pstmt.setInt(2, branchId);
             rs = pstmt.executeQuery();
             count = 0;
             while (rs.next()) {
@@ -375,7 +392,7 @@ public class HandPosAction implements Action {
             }
             
             if(count<1){
-            	throw new NullPointerException("此标签未激活"); 
+            	throw new CardException("此标签未激活"); 
             }
             
 			pstmt = conn.prepareStatement(QUERY_CARD);
@@ -409,9 +426,6 @@ public class HandPosAction implements Action {
 				throw new NullPointerException("无此卡记录"); 
 			}
 			
-			int userId=processAuth(userName,userPassword);
-			int branchId = getBranchId(userId);
-
 			pstmt.setInt(3, cardId);
 			pstmt.setInt(4, processAuth(userName,userPassword));
 			pstmt.setInt(5, 3);
@@ -437,6 +451,8 @@ public class HandPosAction implements Action {
 		}finally{
 
 			try {
+				conn.setAutoCommit(true);
+
 				if(pstmt != null)
 					pstmt.close();
 				if(conn != null)

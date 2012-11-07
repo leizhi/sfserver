@@ -18,8 +18,6 @@ public class IDGenerator {
 
 	private static final String SELECT_MAX_BY_TABLE="SELECT MAX(id) maxid FROM ";
 	
-	private static final String ENABLE_CARD="SELECT id FROM Card WHERE rfidcode=? AND wineJarId IS NOT NULL";
-
 	public synchronized static int getNextID(Connection connection,String table) {
 		boolean notConn = false;
         PreparedStatement pstmt = null;
@@ -66,45 +64,6 @@ public class IDGenerator {
 	
 	public synchronized static int getNextID(String table) {
 		return getNextID(null,table);
-	}
-	
-	public synchronized static boolean enableCard(Connection connection,String rfidCode){
-		boolean notConn = false;
-		PreparedStatement pstmt = null;
-		boolean enableCard = false;
-		try{
-        	if(connection==null){
-        		notConn = true;
-        		connection=DbConnectionManager.getConnection();
-        	}
-        	
-			pstmt = connection.prepareStatement(ENABLE_CARD);
-			pstmt.setString(1, rfidCode);
-			
-			ResultSet result = pstmt.executeQuery();
-			if(result.next()){
-//				id = result.getInt(1);
-				enableCard = true;
-			}
-		} catch (Exception e) {
-			if(log.isDebugEnabled()) log.debug("Exception="+e.getMessage());
-			enableCard = false;
-		}finally{
-
-			try {
-				if(pstmt != null)
-					pstmt.close();
-				
-				if(notConn){
-					if(connection != null)
-						connection.close();
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		return enableCard;
 	}
 	
 	public synchronized static int getId(Connection connection,String table,String fieldName,String fieldValue){
