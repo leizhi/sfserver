@@ -467,7 +467,7 @@ public class HandPosAction implements Action {
 	}
 	
 	//Card
-	private static final String ADD_CARD="INSERT INTO Card(id,rfidcode,uuid,wineryId,wineJarId,branchId) VALUES(?,?,?,?,0,?)";
+	private static final String ADD_CARD="INSERT INTO Card(id,rfidcode,uuid,wineryId,wineJarId,branchId,processId) VALUES(?,?,?,?,0,?,0)";
 
 	public String saveCard(String userId,String rfidcode,String uuid,String wineryName){
 		if(log.isDebugEnabled()) log.debug("save Card start");
