@@ -467,7 +467,7 @@ public class HandPosAction implements Action {
 	}
 	
 	//Card
-	private static final String ADD_CARD="INSERT INTO Card(id,rfidcode,uuid,wineryId) VALUES(?,?,?,?)";
+	private static final String ADD_CARD="INSERT INTO Card(id,rfidcode,uuid,wineryId,wineJarId,branchId) VALUES(?,?,?,?,0,?)";
 
 	public String saveCard(String userId,String rfidcode,String uuid,String wineryName){
 		if(log.isDebugEnabled()) log.debug("save Card start");
@@ -487,15 +487,16 @@ public class HandPosAction implements Action {
 
 			int wineryId = IDGenerator.getId("Winery", "definition", wineryName);
 			pstmt.setInt(4, wineryId);
+			
+			Integer lId=new Integer(userId);
+			int branchId = getBranchId(lId);
+
+			pstmt.setInt(5, branchId);
 			pstmt.execute();
 			
 			pstmt = conn.prepareStatement(ADD_CARD_JOB);
 			
 			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
-			
-			Integer lId=new Integer(userId);
-			
-			int branchId = getBranchId(lId);
 			
 			pstmt.setLong(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(new Date().getTime()));
