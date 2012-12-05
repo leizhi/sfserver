@@ -51,7 +51,7 @@ public class HandPosAction implements Action {
 	//sfcomm call
 	
 	public int getUserId(String userName){
-		Connection connection=null;
+		Connection conn=null;
         PreparedStatement pstmt = null;
         int userId = -1;
         try {
@@ -59,8 +59,8 @@ public class HandPosAction implements Action {
     			throw new NullPointerException("请输入用户名");
     		}
     		
-			connection = DbConnectionManager.getConnection();
-			pstmt = connection.prepareStatement(QUERY_USER_ID);
+			conn = DbConnectionManager.getConnection();
+			pstmt = conn.prepareStatement(QUERY_USER_ID);
             pstmt.setString(1, userName);
             
             ResultSet rs = pstmt.executeQuery();
@@ -75,8 +75,8 @@ public class HandPosAction implements Action {
 			try {
 				if(pstmt != null)
 					pstmt.close();
-				if(connection != null)
-					connection.close();
+				if(conn != null)
+					conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -86,12 +86,12 @@ public class HandPosAction implements Action {
 	}
 	
 	public int getBranchId(int userId){
-		Connection connection=null;
+		Connection conn=null;
         PreparedStatement pstmt = null;
         int branchId = -1;
         try {
-			connection = DbConnectionManager.getConnection();
-			pstmt = connection.prepareStatement(QUERY_BRANCH_ID);
+			conn = DbConnectionManager.getConnection();
+			pstmt = conn.prepareStatement(QUERY_BRANCH_ID);
             pstmt.setInt(1, userId);
             
             ResultSet rs = pstmt.executeQuery();
@@ -106,8 +106,8 @@ public class HandPosAction implements Action {
 			try {
 				if(pstmt != null)
 					pstmt.close();
-				if(connection != null)
-					connection.close();
+				if(conn != null)
+					conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -117,7 +117,7 @@ public class HandPosAction implements Action {
 	}
 	
 	public int processAuth(String userName,String password){
-		Connection connection=null;
+		Connection conn=null;
         PreparedStatement pstmt = null;
         int userId=-1;
         
@@ -130,9 +130,9 @@ public class HandPosAction implements Action {
     			throw new NullPointerException("请输入密码");
     		}
     		
-			connection = DbConnectionManager.getConnection();
+			conn = DbConnectionManager.getConnection();
 			
-			pstmt = connection.prepareStatement(LOGIN);
+			pstmt = conn.prepareStatement(LOGIN);
             pstmt.setString(1, userName);
             pstmt.setString(2, StringUtils.hash(password));
             
@@ -149,8 +149,8 @@ public class HandPosAction implements Action {
 			try {
 				if(pstmt != null)
 					pstmt.close();
-				if(connection != null)
-					connection.close();
+				if(conn != null)
+					conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -160,13 +160,13 @@ public class HandPosAction implements Action {
 	}
 	
 	public boolean existsPatrol(Integer cardId,Integer branchId,Integer userId,String dateTime){
-		Connection connection=null;
+		Connection conn=null;
         PreparedStatement pstmt = null;
         
         try {
-			connection = DbConnectionManager.getConnection();
+			conn = DbConnectionManager.getConnection();
 			
-			pstmt = connection.prepareStatement(EXISTS_CARD_JOB);
+			pstmt = conn.prepareStatement(EXISTS_CARD_JOB);
             pstmt.setInt(1, cardId);
             pstmt.setInt(2, branchId);
             pstmt.setInt(3, userId);
@@ -193,8 +193,8 @@ public class HandPosAction implements Action {
 			try {
 				if(pstmt != null)
 					pstmt.close();
-				if(connection != null)
-					connection.close();
+				if(conn != null)
+					conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -203,15 +203,15 @@ public class HandPosAction implements Action {
 		return false;
 	}
 	
-	public int saveCardJob(String rfidcode,String userName,String dateTime){
-		Connection connection=null;
+	public int saveCardJob(String rfidcode,String userName,String dateTime) throws SQLException{
+		Connection conn=null;
         PreparedStatement pstmt = null;
         int RET=-1;
         try {
-			connection = DbConnectionManager.getConnection();
-			connection.setAutoCommit(false);
+			conn = DbConnectionManager.getConnection();
+			conn.setAutoCommit(false);
 			
-			int cardId = IDGenerator.getId(connection,"Card","rfidcode",rfidcode);
+			int cardId = IDGenerator.getId(conn,"Card","rfidcode",rfidcode);
 			if(cardId<0){
 				RET = 1;
 				throw new CardException("无此标签记录"); 
@@ -224,7 +224,7 @@ public class HandPosAction implements Action {
 			}
 			int branchId = getBranchId(userId);
 			
-			pstmt = connection.prepareStatement(ACTIVATE_CARD);
+			pstmt = conn.prepareStatement(ACTIVATE_CARD);
 			pstmt.setString(1, rfidcode);
 			pstmt.setInt(2, branchId);
 			ResultSet rs = pstmt.executeQuery();
@@ -246,7 +246,7 @@ public class HandPosAction implements Action {
 			if(log.isDebugEnabled()) log.debug("userName:"+userName);
 			if(log.isDebugEnabled()) log.debug("userId:"+userId);
 			
-			pstmt = connection.prepareStatement(COUNT_PROCESS);
+			pstmt = conn.prepareStatement(COUNT_PROCESS);
 			pstmt.setInt(1, cardId);
 			pstmt.setInt(2, branchId);
             rs = pstmt.executeQuery();
@@ -255,14 +255,14 @@ public class HandPosAction implements Action {
             	processId = rs.getInt(1);
             }
             
-			pstmt = connection.prepareStatement(UPDATE_CARD_JOB);
+			pstmt = conn.prepareStatement(UPDATE_CARD_JOB);
 			pstmt.setInt(1, processId);
 			pstmt.setInt(2, cardId);
 			pstmt.setInt(3, branchId);
 			pstmt.execute();
 			
-			pstmt = connection.prepareStatement(ADD_CARD_JOB);
-			int cardJobId = IDGenerator.getNextID(connection,"CardJob");
+			pstmt = conn.prepareStatement(ADD_CARD_JOB);
+			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
 			
 			if(log.isDebugEnabled()) log.debug("cardJobId:"+cardJobId);
 
@@ -274,35 +274,23 @@ public class HandPosAction implements Action {
 			pstmt.setInt(6, branchId);
 			pstmt.execute();
 			
-			connection.commit();
+			conn.commit();
 			
 			RET=0;
         }catch (CardException e) {
-        	try {
-				connection.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
+			conn.rollback();
 			if(log.isErrorEnabled()) log.error("CardException:"+e.getMessage());
 		}catch (Exception e) {
-        	try {
-				connection.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
+			conn.rollback();
 			if(log.isErrorEnabled()) log.error("Exception:"+e.getMessage());
 			RET=3;
 	   }finally {
-			try {
-				connection.setAutoCommit(true);
-				
-				if(pstmt != null)
-					pstmt.close();
-				if(connection != null)
-					connection.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			conn.setAutoCommit(true);
+			
+			if(pstmt != null)
+				pstmt.close();
+			if(conn != null)
+				conn.close();
 		}
         return RET;
 	}
@@ -356,7 +344,7 @@ public class HandPosAction implements Action {
 		return response;
 	}
 	
-	public String cardPatrol(String userName,String userPassword,String rfidcode){
+	public String cardPatrol(String userName,String userPassword,String rfidcode) throws SQLException{
 		String response = "*";
 
 		Connection conn = null;
@@ -441,35 +429,23 @@ public class HandPosAction implements Action {
 			if(log.isDebugEnabled()) log.debug("save finlsh");
 		} catch (Exception e) {
 			response +="1,"+e.getMessage();
-
-			if(log.isDebugEnabled()) log.debug("CardDBObject Exception="+e.getMessage());
-			try {
-				conn.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
-			e.printStackTrace();
+			conn.rollback();
 			
+			if(log.isDebugEnabled()) log.debug("CardDBObject Exception="+e.getMessage());
+			e.printStackTrace();
 		}finally{
-
-			try {
-				conn.setAutoCommit(true);
-
-				if(pstmt != null)
-					pstmt.close();
-				if(conn != null)
-					conn.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-
+			conn.setAutoCommit(true);
+			if(pstmt != null)
+				pstmt.close();
+			if(conn != null)
+				conn.close();
 		}
 		
 		return response += "#";
 	}
 	
 	//Card
-	public String saveCard(String userId,String rfidcode,String uuid,String wineryName,String cardTypeName){
+	public String saveCard(String userId,String rfidcode,String uuid,String wineryName,String cardTypeName) throws SQLException{
 		if(log.isDebugEnabled()) log.debug("save Card start");
 		String response = "*";
 
@@ -513,27 +489,17 @@ public class HandPosAction implements Action {
     		
 			response +="0;"+Action.SAVE_CARD;
 		} catch (Exception e) {
-			System.out.println("CardDBObject Exception="+e.getMessage());
-			try {
-				conn.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
+			conn.rollback();
 			response +="1;"+e.getMessage();
 
 			e.printStackTrace();
 		}finally{
-
-			try {
-				conn.setAutoCommit(false);
-
-				if(pstmt != null)
-					pstmt.close();
-				if(conn != null)
-					conn.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			conn.setAutoCommit(false);
+			
+			if(pstmt != null)
+				pstmt.close();
+			if(conn != null)
+				conn.close();
 		}
 		if(log.isDebugEnabled()) log.debug("response finlsh"+response);
 
@@ -545,7 +511,7 @@ public class HandPosAction implements Action {
 	public static String processLogin(String userName,String userPassWord) {
 		String response = "*";
 
-		Connection connection=null;
+		Connection conn=null;
         PreparedStatement pstmt = null;
         int count=0;
         try {
@@ -556,8 +522,8 @@ public class HandPosAction implements Action {
     		if(StringUtils.isNull(userPassWord))
     			throw new NullPointerException("请输入密码");
     		
-			connection = DbConnectionManager.getConnection();
-			pstmt = connection.prepareStatement(EXISTS_USER);
+			conn = DbConnectionManager.getConnection();
+			pstmt = conn.prepareStatement(EXISTS_USER);
             pstmt.setString(1, userName);
             
             ResultSet rs = pstmt.executeQuery();
@@ -570,7 +536,7 @@ public class HandPosAction implements Action {
             
             count=0;
             
-            pstmt = connection.prepareStatement(LOGIN);
+            pstmt = conn.prepareStatement(LOGIN);
             pstmt.setString(1, userName);
             pstmt.setString(2, userPassWord);
 
@@ -592,8 +558,8 @@ public class HandPosAction implements Action {
 			try {
 				if(pstmt != null)
 					pstmt.close();
-				if(connection != null)
-					connection.close();
+				if(conn != null)
+					conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -607,17 +573,17 @@ public class HandPosAction implements Action {
 
 	private static final String ADD_USER="INSERT INTO User(id,name,password,userInfoId,branchId) VALUES(?,?,?,?,1)";
 
-	public void processRegister(String userName,String userPassWord,String serialNumber){
+	public void processRegister(String userName,String userPassWord,String serialNumber) throws SQLException{
 		if(log.isDebugEnabled()) log.debug("processRegister");	
 
-		Connection connection=null;
+		Connection conn=null;
         PreparedStatement pstmt = null;
         long count=0;
         try {
-			connection = DbConnectionManager.getConnection();
-			connection.setAutoCommit(false);
+			conn = DbConnectionManager.getConnection();
+			conn.setAutoCommit(false);
 			
-			pstmt = connection.prepareStatement(EXISTS_USER);
+			pstmt = conn.prepareStatement(EXISTS_USER);
             pstmt.setString(1, userName);
             
             ResultSet rs = pstmt.executeQuery();
@@ -629,7 +595,7 @@ public class HandPosAction implements Action {
 
             if(count > 0) throw new NullPointerException("此用户已注册");
             
-            pstmt = connection.prepareStatement(EXISTS_CARD);
+            pstmt = conn.prepareStatement(EXISTS_CARD);
             pstmt.setString(1, StringUtils.hash(serialNumber));
             
             rs = pstmt.executeQuery();
@@ -640,68 +606,49 @@ public class HandPosAction implements Action {
 
             if(count > 0) throw new NullPointerException("此卡已注册");
             
-            pstmt = connection.prepareStatement(ADD_USER_INFO);
-            int userInfoId = IDGenerator.getNextID(connection,"UserInfo");
+            pstmt = conn.prepareStatement(ADD_USER_INFO);
+            int userInfoId = IDGenerator.getNextID(conn,"UserInfo");
             pstmt.setLong(1, userInfoId);
             pstmt.setString(2, StringUtils.hash(serialNumber));
             pstmt.execute();
             
-            pstmt = connection.prepareStatement(ADD_USER);
-            pstmt.setLong(1, IDGenerator.getNextID(connection,"UserInfo"));
+            pstmt = conn.prepareStatement(ADD_USER);
+            pstmt.setLong(1, IDGenerator.getNextID(conn,"UserInfo"));
             pstmt.setString(2, userName);
             pstmt.setString(3, StringUtils.hash(userPassWord));
             pstmt.setInt(4, userInfoId);
             pstmt.execute();
 
-            connection.commit();
+            conn.commit();
 		}catch (NullPointerException e) {
-			if(connection != null)
-				try {
-					connection.rollback();
-				} catch (SQLException e1) {
-					e1.printStackTrace();
-				}
+			conn.rollback();
 			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
 		}catch (SQLException e) {
-				if(connection != null)
-					try {
-						connection.rollback();
-					} catch (SQLException e1) {
-						e1.printStackTrace();
-					}
+			conn.rollback();
 			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
 		}catch (Exception e) {
-				if(connection != null)
-					try {
-						connection.rollback();
-					} catch (SQLException e1) {
-						e1.printStackTrace();
-					}
+			conn.rollback();
 			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
 		}finally {
-			try {
-				connection.setAutoCommit(false);
+			conn.setAutoCommit(false);
 
-				if(pstmt != null)
-					pstmt.close();
-				if(connection != null)
-					connection.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			if(pstmt != null)
+				pstmt.close();
+			if(conn != null)
+				conn.close();
 		}
 	}
 	
 	public static String getKey(String value) {
 		
-		Connection connection=null;
+		Connection conn=null;
         PreparedStatement pstmt = null;
         String result = null;
         try {
         	String sql = "SELECT abbreviation FROM Winery WHERE definition=?";
         	
-			connection = DbConnectionManager.getConnection();
-            pstmt = connection.prepareStatement(sql);
+			conn = DbConnectionManager.getConnection();
+            pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, value);
             
             ResultSet rs = pstmt.executeQuery();
@@ -714,8 +661,8 @@ public class HandPosAction implements Action {
 			try {
 				if(pstmt != null)
 					pstmt.close();
-				if(connection != null)
-					connection.close();
+				if(conn != null)
+					conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -751,11 +698,11 @@ public class HandPosAction implements Action {
 		
 		String nextNumber = "0000";
 		
-		Connection connection=null;
+		Connection conn=null;
         PreparedStatement pstmt = null;
         try {
-			connection = DbConnectionManager.getConnection();
-            pstmt = connection.prepareStatement(SELECT_MAX_BY_LIKE);
+			conn = DbConnectionManager.getConnection();
+            pstmt = conn.prepareStatement(SELECT_MAX_BY_LIKE);
             pstmt.setString(1, prefix+"%");
             
             ResultSet rs = pstmt.executeQuery();
@@ -791,8 +738,8 @@ public class HandPosAction implements Action {
 			try {
 				if(pstmt != null)
 					pstmt.close();
-				if(connection != null)
-					connection.close();
+				if(conn != null)
+					conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}

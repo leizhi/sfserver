@@ -18,18 +18,18 @@ public class IDGenerator {
 
 	private static final String SELECT_MAX_BY_TABLE="SELECT MAX(id) maxid FROM ";
 	
-	public synchronized static int getNextID(Connection connection,String table) {
+	public synchronized static int getNextID(Connection conn,String table) {
 		boolean notConn = false;
         PreparedStatement pstmt = null;
         ResultSet result = null;
         int nextId=0;
         try {
-        	if(connection==null){
+        	if(conn==null){
         		notConn = true;
-        		connection=DbConnectionManager.getConnection();
+        		conn=DbConnectionManager.getConnection();
         	}
         	
-			pstmt = connection.prepareStatement(SELECT_MAX_BY_TABLE + table);
+			pstmt = conn.prepareStatement(SELECT_MAX_BY_TABLE + table);
 			result = pstmt.executeQuery();
 			while (result.next()) {
 				nextId = result.getInt(1);
@@ -51,8 +51,8 @@ public class IDGenerator {
 					pstmt.close();
 				
 				if(notConn){
-					if(connection != null)
-						connection.close();
+					if(conn != null)
+						conn.close();
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -66,19 +66,19 @@ public class IDGenerator {
 		return getNextID(null,table);
 	}
 	
-	public synchronized static int getId(Connection connection,String table,String fieldName,String fieldValue){
+	public synchronized static int getId(Connection conn,String table,String fieldName,String fieldValue){
 		boolean notConn = false;
 		PreparedStatement pstmt = null;
 		int id = -1;
 		String sql = "SELECT id FROM "+table+" WHERE "+fieldName+"=?";
 		try{
 			
-        	if(connection==null){
+        	if(conn==null){
         		notConn = true;
-        		connection=DbConnectionManager.getConnection();
+        		conn=DbConnectionManager.getConnection();
         	}
 
-        	pstmt = connection.prepareStatement(sql);
+        	pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, fieldValue);
 			
 			ResultSet result = pstmt.executeQuery();
@@ -95,8 +95,8 @@ public class IDGenerator {
 					pstmt.close();
 				
 				if(notConn){
-					if(connection != null)
-						connection.close();
+					if(conn != null)
+						conn.close();
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
