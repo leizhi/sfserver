@@ -38,6 +38,8 @@ public class HandPosAction implements Action {
 
 	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material,card.branchId FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
+	private static final String ADD_CARD="INSERT INTO Card(id,rfidcode,uuid,wineryId,wineJarId,branchId,processId,cardTypeId) VALUES(?,?,?,?,0,?,0,?)";
+
 	private static final String ADD_CARD_JOB="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId,branchId,processId,spotNormal,cardNormal) VALUES(?,?,?,?,?,?,0,'Y','Y')";
 
 	private static final String COUNT_PROCESS="SELECT COUNT(id) FROM CardJob WHERE cardId=? AND branchId=?";
@@ -467,9 +469,7 @@ public class HandPosAction implements Action {
 	}
 	
 	//Card
-	private static final String ADD_CARD="INSERT INTO Card(id,rfidcode,uuid,wineryId,wineJarId,branchId,processId) VALUES(?,?,?,?,0,?,0)";
-
-	public String saveCard(String userId,String rfidcode,String uuid,String wineryName){
+	public String saveCard(String userId,String rfidcode,String uuid,String wineryName,String cardTypeName){
 		if(log.isDebugEnabled()) log.debug("save Card start");
 		String response = "*";
 
@@ -504,6 +504,9 @@ public class HandPosAction implements Action {
 			pstmt.setLong(4, lId);
 			pstmt.setInt(5, 1);
 			pstmt.setInt(6, branchId);
+			
+			int cardTypeId = IDGenerator.getId("wineShared.CardType", "cardTypeName", cardTypeName);
+			pstmt.setInt(7, cardTypeId);
 			pstmt.execute();
 			
 			conn.commit();
@@ -976,11 +979,11 @@ public class HandPosAction implements Action {
 					response = nextRfidCode(args[1]);
 					break;
 				case Action.SAVE_CARD:
-					if(args.length !=5){
+					if(args.length !=6){
 						response = "参数不正确";
 				    }
 					
-					response = saveCard(args[1],args[2],args[3],args[4]);
+					response = saveCard(args[1],args[2],args[3],args[4],args[5]);
 
 					break;
 				case Action.SEARCH_CARD_TYPES:
