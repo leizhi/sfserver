@@ -490,8 +490,10 @@ public class HandPosAction implements Action {
 			
 			Integer lId=new Integer(userId);
 			int branchId = getBranchId(lId);
-
 			pstmt.setInt(5, branchId);
+			
+			int cardTypeId = IDGenerator.getId("wineShared.CardType", "cardTypeName", cardTypeName);
+			pstmt.setInt(6, cardTypeId);
 			pstmt.execute();
 			
 			pstmt = conn.prepareStatement(ADD_CARD_JOB);
@@ -504,9 +506,6 @@ public class HandPosAction implements Action {
 			pstmt.setLong(4, lId);
 			pstmt.setInt(5, 1);
 			pstmt.setInt(6, branchId);
-			
-			int cardTypeId = IDGenerator.getId("wineShared.CardType", "cardTypeName", cardTypeName);
-			pstmt.setInt(7, cardTypeId);
 			pstmt.execute();
 			
 			conn.commit();
