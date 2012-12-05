@@ -525,6 +525,8 @@ public class HandPosAction implements Action {
 		}finally{
 
 			try {
+				conn.setAutoCommit(false);
+
 				if(pstmt != null)
 					pstmt.close();
 				if(conn != null)
@@ -678,6 +680,8 @@ public class HandPosAction implements Action {
 			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
 		}finally {
 			try {
+				connection.setAutoCommit(false);
+
 				if(pstmt != null)
 					pstmt.close();
 				if(connection != null)
