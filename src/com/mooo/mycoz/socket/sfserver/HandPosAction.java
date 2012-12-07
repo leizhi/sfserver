@@ -50,7 +50,7 @@ public class HandPosAction implements Action {
 
 	//sfcomm call
 	
-	public synchronized int getUserId(String userName){
+	public int getUserId(String userName){
 		Connection conn=null;
         PreparedStatement pstmt = null;
         int userId = -1;
@@ -85,7 +85,7 @@ public class HandPosAction implements Action {
 		return userId;
 	}
 	
-	public synchronized int getBranchId(int userId){
+	public int getBranchId(int userId){
 		Connection conn=null;
         PreparedStatement pstmt = null;
         int branchId = -1;
@@ -116,7 +116,7 @@ public class HandPosAction implements Action {
 		return branchId;
 	}
 	
-	public synchronized int processAuth(String userName,String password){
+	public int processAuth(String userName,String password){
 		Connection conn=null;
         PreparedStatement pstmt = null;
         int userId=-1;
@@ -159,7 +159,7 @@ public class HandPosAction implements Action {
 		return userId;
 	}
 	
-	public synchronized boolean existsPatrol(Integer cardId,Integer branchId,Integer userId,String dateTime){
+	public boolean existsPatrol(Integer cardId,Integer branchId,Integer userId,String dateTime){
 		Connection conn=null;
         PreparedStatement pstmt = null;
         
@@ -203,7 +203,7 @@ public class HandPosAction implements Action {
 		return false;
 	}
 	
-	public synchronized int saveCardJob(String rfidcode,String userName,String dateTime) throws SQLException{
+	public int saveCardJob(String rfidcode,String userName,String dateTime) throws SQLException{
 		Connection conn=null;
         PreparedStatement pstmt = null;
         int RET=-1;
@@ -211,7 +211,7 @@ public class HandPosAction implements Action {
 			conn = DbConnectionManager.getConnection();
 			conn.setAutoCommit(false);
 			
-			int cardId = IDGenerator.getId("Card","rfidcode",rfidcode);
+			int cardId = IDGenerator.getId(conn,"Card","rfidcode",rfidcode);
 			if(cardId<0){
 				RET = 1;
 				throw new CardException("无此标签记录"); 
@@ -262,7 +262,7 @@ public class HandPosAction implements Action {
 			pstmt.execute();
 			
 			pstmt = conn.prepareStatement(ADD_CARD_JOB);
-			int cardJobId = IDGenerator.getNextID("CardJob");
+			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
 			
 			if(log.isDebugEnabled()) log.debug("cardJobId:"+cardJobId);
 
@@ -295,7 +295,7 @@ public class HandPosAction implements Action {
         return RET;
 	}
 	
-	public synchronized String synchronize(String userName,String userPassword,String buffer){
+	public String synchronize(String userName,String userPassword,String buffer){
 		String response = "";
 		
 		try{
@@ -344,7 +344,7 @@ public class HandPosAction implements Action {
 		return response;
 	}
 	
-	public synchronized String cardPatrol(String userName,String userPassword,String rfidcode) throws SQLException{
+	public String cardPatrol(String userName,String userPassword,String rfidcode) throws SQLException{
 		String response = "*";
 
 		Connection conn = null;
@@ -403,14 +403,14 @@ public class HandPosAction implements Action {
 			
 			pstmt = conn.prepareStatement(ADD_CARD_JOB);
 			
-			int cardJobId = IDGenerator.getNextID("CardJob");
+			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
 			if(log.isDebugEnabled()) log.debug("cardJobId:"+cardJobId);
 
 			pstmt.setInt(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			if(log.isDebugEnabled()) log.debug("rfidcode:"+rfidcode);
 
-			int cardId = IDGenerator.getId("Card","rfidcode",rfidcode);
+			int cardId = IDGenerator.getId(conn,"Card","rfidcode",rfidcode);
 			if(log.isDebugEnabled()) log.debug("cardId:"+cardId);
 			if(cardId<0){
 				throw new NullPointerException("无此卡记录"); 
@@ -445,7 +445,7 @@ public class HandPosAction implements Action {
 	}
 	
 	//Card
-	public synchronized String saveCard(String userId,String uuid,String wineryName,String cardTypeName) throws SQLException{
+	public String saveCard(String userId,String rfidcode,String uuid,String wineryName,String cardTypeName) throws SQLException{
 		if(log.isDebugEnabled()) log.debug("save Card start");
 		String response = "*";
 
@@ -458,19 +458,17 @@ public class HandPosAction implements Action {
 			pstmt = conn.prepareStatement(ADD_CARD);
 			long cardId = IDGenerator.getNextID(conn,"Card");
 			pstmt.setLong(1, cardId);
-			
-			String rfidcode = nextRfidCode(wineryName);
 			pstmt.setString(2, rfidcode);
 			pstmt.setString(3, uuid);
 
-			int wineryId = IDGenerator.getId(conn,"Winery", "definition", wineryName);
+			int wineryId = IDGenerator.getId("Winery", "definition", wineryName);
 			pstmt.setInt(4, wineryId);
 			
 			Integer lId=new Integer(userId);
 			int branchId = getBranchId(lId);
 			pstmt.setInt(5, branchId);
 			
-			int cardTypeId = IDGenerator.getId(conn,"wineShared.CardType", "cardTypeName", cardTypeName);
+			int cardTypeId = IDGenerator.getId("wineShared.CardType", "cardTypeName", cardTypeName);
 			pstmt.setInt(6, cardTypeId);
 			pstmt.execute();
 			
@@ -489,7 +487,7 @@ public class HandPosAction implements Action {
 			conn.commit();
 			if(log.isDebugEnabled()) log.debug("save finlsh");
     		
-			response +="0;"+Action.SAVE_CARD+";"+rfidcode;
+			response +="0;"+Action.SAVE_CARD;
 		} catch (Exception e) {
 			conn.rollback();
 			response +="1;"+e.getMessage();
@@ -510,7 +508,7 @@ public class HandPosAction implements Action {
 	
 	private static final String EXISTS_USER="SELECT count(*) FROM User WHERE name=?";
 	
-	public synchronized static String processLogin(String userName,String userPassWord) {
+	public static String processLogin(String userName,String userPassWord) {
 		String response = "*";
 
 		Connection conn=null;
@@ -575,7 +573,7 @@ public class HandPosAction implements Action {
 
 	private static final String ADD_USER="INSERT INTO User(id,name,password,userInfoId,branchId) VALUES(?,?,?,?,1)";
 
-	public synchronized void processRegister(String userName,String userPassWord,String serialNumber) throws SQLException{
+	public void processRegister(String userName,String userPassWord,String serialNumber) throws SQLException{
 		if(log.isDebugEnabled()) log.debug("processRegister");	
 
 		Connection conn=null;
@@ -609,13 +607,13 @@ public class HandPosAction implements Action {
             if(count > 0) throw new NullPointerException("此卡已注册");
             
             pstmt = conn.prepareStatement(ADD_USER_INFO);
-            int userInfoId = IDGenerator.getNextID("UserInfo");
+            int userInfoId = IDGenerator.getNextID(conn,"UserInfo");
             pstmt.setLong(1, userInfoId);
             pstmt.setString(2, StringUtils.hash(serialNumber));
             pstmt.execute();
             
             pstmt = conn.prepareStatement(ADD_USER);
-            pstmt.setLong(1, IDGenerator.getNextID("UserInfo"));
+            pstmt.setLong(1, IDGenerator.getNextID(conn,"UserInfo"));
             pstmt.setString(2, userName);
             pstmt.setString(3, StringUtils.hash(userPassWord));
             pstmt.setInt(4, userInfoId);
@@ -641,7 +639,7 @@ public class HandPosAction implements Action {
 		}
 	}
 	
-	public synchronized static String getKey(String value) {
+	public static String getKey(String value) {
 		
 		Connection conn=null;
         PreparedStatement pstmt = null;
@@ -673,7 +671,8 @@ public class HandPosAction implements Action {
         return result;
 	}
 	
-	public synchronized static String nextRfidCode(String winery) {
+	public static String nextRfidCode(String winery) {
+		String response = "*";
 
 		String nextCode=null;
 		
@@ -731,7 +730,9 @@ public class HandPosAction implements Action {
             
             nextCode = prefix+nextNumber;
 			
+            response +="0;"+Action.NEXT_RFID_CODE+";"+nextCode;
 		}catch (Exception e) {
+			response +="1;"+e.getMessage();
 			e.printStackTrace();
 	   }finally {
 			try {
@@ -744,10 +745,10 @@ public class HandPosAction implements Action {
 			}
 			
 		}
-        return nextCode;
+        return response += "#";
 	}
 	
-	public synchronized String existCard(String  uuid){
+	public String existCard(String  uuid){
 		String response = "*";
 
 		Connection conn = null;
@@ -790,7 +791,7 @@ public class HandPosAction implements Action {
 	
 	private static final String SEARCH_WINERYS="SELECT w.definition FROM Winery w,WineryMap wm WHERE wm.wineryId=w.id AND wm.userId=? ORDER BY w.id";
 
-	public synchronized String searchWinerys(String  userId){
+	public String searchWinerys(String  userId){
 		String response = "*";
 
 		Connection conn = null;
@@ -834,7 +835,7 @@ public class HandPosAction implements Action {
 	
 	private static final String SEARCH_CARD_TYPES="SELECT cardTypeName FROM wineShared.CardType ORDER BY id";
 
-	public synchronized String searchCardTypes(){
+	public String searchCardTypes(){
 		String response = "*";
 
 		Connection conn = null;
@@ -874,7 +875,7 @@ public class HandPosAction implements Action {
         return response += "#";
 	}
 	
-	public synchronized String forward(String requestLine) {
+	public String forward(String requestLine) {
 //		String[] args = request.split(" +\n*");
 		String response = null;
 		try{
@@ -920,12 +921,19 @@ public class HandPosAction implements Action {
 					
 					response = existCard(args[1]);
 					break;
-				case Action.SAVE_CARD:
-					if(args.length !=5){
+				case Action.NEXT_RFID_CODE:
+					if(args.length !=2){
 						response = "参数不正确";
 				    }
 					
-					response = saveCard(args[1],args[2],args[3],args[4]);
+					response = nextRfidCode(args[1]);
+					break;
+				case Action.SAVE_CARD:
+					if(args.length !=6){
+						response = "参数不正确";
+				    }
+					
+					response = saveCard(args[1],args[2],args[3],args[4],args[5]);
 
 					break;
 				case Action.SEARCH_CARD_TYPES:

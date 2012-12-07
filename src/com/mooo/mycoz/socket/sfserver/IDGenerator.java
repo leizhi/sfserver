@@ -20,8 +20,7 @@ public class IDGenerator {
 	
 	public synchronized static int getNextID(Connection conn,String table) {
 		boolean notConn = false;
-		
-		PreparedStatement pstmt = null;
+        PreparedStatement pstmt = null;
         ResultSet result = null;
         int nextId=0;
         try {
@@ -58,25 +57,27 @@ public class IDGenerator {
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
+			
 		}
 		return nextId;
 	} // getNextID(String table)
+	
 	public synchronized static int getNextID(String table) {
 		return getNextID(null,table);
 	}
 	
 	public synchronized static int getId(Connection conn,String table,String fieldName,String fieldValue){
 		boolean notConn = false;
-		
 		PreparedStatement pstmt = null;
 		int id = -1;
 		String sql = "SELECT id FROM "+table+" WHERE "+fieldName+"=?";
 		try{
+			
         	if(conn==null){
         		notConn = true;
         		conn=DbConnectionManager.getConnection();
         	}
-        	
+
         	pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, fieldValue);
 			
@@ -105,8 +106,8 @@ public class IDGenerator {
 		return id;
 	}
 	
-	public synchronized static int getId(String table,String fieldName,String fieldValue) {
-		return getId(null,table,fieldName,fieldValue);
+	public synchronized static int getId(String table,String fieldName,String fieldValue){
+		return getId(null,table, fieldName, fieldValue);
 	}
 	
 	public synchronized static boolean find(String table,String fieldName,String fieldValue){
