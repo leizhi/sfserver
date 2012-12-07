@@ -115,20 +115,18 @@ public class SFServer{
 				boolean forever = true;
 				while (forever){			
 					requestLine = read.readLine();
-					
-					if(log.isDebugEnabled()) log.debug("requestLine:"+requestLine);
+
 
 					if(requestLine==null || requestLine.equals("3")|| requestLine.equals("*3#"))
 						break;
 					
 					requestLine = requestLine.trim();
-					
 					//打印请求数据
-//					print.println("requestLine :" + requestLine);
+					if(log.isDebugEnabled()) log.debug("requestLine:"+requestLine);
 					
 					String response = ActionFactory.getInstance().forward(requestLine);
 					//打印响应数据
-//					print.println("response :" + response);
+					if(log.isDebugEnabled()) log.debug("response:" + response);
 					print.println(response);
 					print.flush();
 					
