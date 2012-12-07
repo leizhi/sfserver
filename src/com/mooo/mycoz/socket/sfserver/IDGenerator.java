@@ -18,17 +18,13 @@ public class IDGenerator {
 
 	private static final String SELECT_MAX_BY_TABLE="SELECT MAX(id) maxid FROM ";
 	
-	public synchronized static int getNextID(Connection conn,String table) {
-		boolean notConn = false;
+	public synchronized static int getNextID(String table) {
+		Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet result = null;
         int nextId=0;
         try {
-        	if(conn==null){
-        		notConn = true;
-        		conn=DbConnectionManager.getConnection();
-        	}
-        	
+        	conn=DbConnectionManager.getConnection();
 			pstmt = conn.prepareStatement(SELECT_MAX_BY_TABLE + table);
 			result = pstmt.executeQuery();
 			while (result.next()) {
@@ -50,34 +46,23 @@ public class IDGenerator {
 				if(pstmt != null)
 					pstmt.close();
 				
-				if(notConn){
-					if(conn != null)
-						conn.close();
-				}
+				if(conn != null)
+					conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-			
 		}
 		return nextId;
 	} // getNextID(String table)
 	
-	public synchronized static int getNextID(String table) {
-		return getNextID(null,table);
-	}
-	
-	public synchronized static int getId(Connection conn,String table,String fieldName,String fieldValue){
-		boolean notConn = false;
+	public synchronized static int getId(String table,String fieldName,String fieldValue){
+		Connection conn = null;
 		PreparedStatement pstmt = null;
 		int id = -1;
 		String sql = "SELECT id FROM "+table+" WHERE "+fieldName+"=?";
 		try{
 			
-        	if(conn==null){
-        		notConn = true;
-        		conn=DbConnectionManager.getConnection();
-        	}
-
+        	conn=DbConnectionManager.getConnection();
         	pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, fieldValue);
 			
@@ -94,20 +79,14 @@ public class IDGenerator {
 				if(pstmt != null)
 					pstmt.close();
 				
-				if(notConn){
-					if(conn != null)
-						conn.close();
-				}
+				if(conn != null)
+					conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
 		}
 		
 		return id;
-	}
-	
-	public synchronized static int getId(String table,String fieldName,String fieldValue){
-		return getId(null,table, fieldName, fieldValue);
 	}
 	
 	public synchronized static boolean find(String table,String fieldName,String fieldValue){

@@ -211,7 +211,7 @@ public class HandPosAction implements Action {
 			conn = DbConnectionManager.getConnection();
 			conn.setAutoCommit(false);
 			
-			int cardId = IDGenerator.getId(conn,"Card","rfidcode",rfidcode);
+			int cardId = IDGenerator.getId("Card","rfidcode",rfidcode);
 			if(cardId<0){
 				RET = 1;
 				throw new CardException("无此标签记录"); 
@@ -262,7 +262,7 @@ public class HandPosAction implements Action {
 			pstmt.execute();
 			
 			pstmt = conn.prepareStatement(ADD_CARD_JOB);
-			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
+			int cardJobId = IDGenerator.getNextID("CardJob");
 			
 			if(log.isDebugEnabled()) log.debug("cardJobId:"+cardJobId);
 
@@ -403,14 +403,14 @@ public class HandPosAction implements Action {
 			
 			pstmt = conn.prepareStatement(ADD_CARD_JOB);
 			
-			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
+			int cardJobId = IDGenerator.getNextID("CardJob");
 			if(log.isDebugEnabled()) log.debug("cardJobId:"+cardJobId);
 
 			pstmt.setInt(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			if(log.isDebugEnabled()) log.debug("rfidcode:"+rfidcode);
 
-			int cardId = IDGenerator.getId(conn,"Card","rfidcode",rfidcode);
+			int cardId = IDGenerator.getId("Card","rfidcode",rfidcode);
 			if(log.isDebugEnabled()) log.debug("cardId:"+cardId);
 			if(cardId<0){
 				throw new NullPointerException("无此卡记录"); 
@@ -456,7 +456,7 @@ public class HandPosAction implements Action {
 			conn.setAutoCommit(false);
 			
 			pstmt = conn.prepareStatement(ADD_CARD);
-			long cardId = IDGenerator.getNextID(conn,"Card");
+			long cardId = IDGenerator.getNextID("Card");
 			pstmt.setLong(1, cardId);
 			pstmt.setString(2, rfidcode);
 			pstmt.setString(3, uuid);
@@ -474,7 +474,7 @@ public class HandPosAction implements Action {
 			
 			pstmt = conn.prepareStatement(ADD_CARD_JOB);
 			
-			int cardJobId = IDGenerator.getNextID(conn,"CardJob");
+			int cardJobId = IDGenerator.getNextID("CardJob");
 			
 			pstmt.setLong(1, cardJobId);
 			pstmt.setTimestamp(2, new Timestamp(new Date().getTime()));
@@ -607,13 +607,13 @@ public class HandPosAction implements Action {
             if(count > 0) throw new NullPointerException("此卡已注册");
             
             pstmt = conn.prepareStatement(ADD_USER_INFO);
-            int userInfoId = IDGenerator.getNextID(conn,"UserInfo");
+            int userInfoId = IDGenerator.getNextID("UserInfo");
             pstmt.setLong(1, userInfoId);
             pstmt.setString(2, StringUtils.hash(serialNumber));
             pstmt.execute();
             
             pstmt = conn.prepareStatement(ADD_USER);
-            pstmt.setLong(1, IDGenerator.getNextID(conn,"UserInfo"));
+            pstmt.setLong(1, IDGenerator.getNextID("UserInfo"));
             pstmt.setString(2, userName);
             pstmt.setString(3, StringUtils.hash(userPassWord));
             pstmt.setInt(4, userInfoId);
