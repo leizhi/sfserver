@@ -629,18 +629,18 @@ public class HandPosAction implements Action {
             
             conn.commit();
             
-    		response +="0,"+Action.SAVE_USER;
+    		response +="0;"+Action.SAVE_USER;
 		}catch (NullPointerException e) {
 			conn.rollback();
-			response +="1,"+e.getMessage();
+			response +="1;"+e.getMessage();
 			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
 		}catch (SQLException e) {
 			conn.rollback();
-			response +="2,"+e.getMessage();
+			response +="2;"+e.getMessage();
 			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
 		}catch (Exception e) {
 			conn.rollback();
-			response +="3,"+e.getMessage();
+			response +="3;"+e.getMessage();
 			if(log.isErrorEnabled()) log.error("Exception:"+e.getMessage());	
 		}finally {
 			conn.setAutoCommit(true);
@@ -710,7 +710,7 @@ public class HandPosAction implements Action {
 		
 		String prefix = wineryCode+nowDate;
 		
-		String nextNumber = "0000";
+		String nextNumber = "0001";
 		
 		Connection conn=null;
         PreparedStatement pstmt = null;
