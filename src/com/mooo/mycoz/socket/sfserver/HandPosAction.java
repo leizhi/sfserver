@@ -30,6 +30,15 @@ public class HandPosAction implements Action {
 
 	private static final String EXISTS_CARD="SELECT count(*) FROM Card WHERE uuid=?";
 	
+	private static final String EXISTS_USER="SELECT count(*) FROM User WHERE name=?";
+
+	private static final String EXIST_USER_CARD="SELECT count(*) FROM UserInfo i,User u WHERE i.userId=u.id AND u.branchId=i.branchId AND i.uuid=?";
+
+	//save user
+	private static final String ADD_USER="INSERT INTO User(id,name,password,branchId) VALUES(?,?,?,?)";
+
+	private static final String ADD_USER_INFO="INSERT INTO UserInfo(id,uuid,userId,branchId) VALUES(?,?,?,?)";
+
 	private static final String REGISTER_CARD="SELECT COUNT(id) FROM Card WHERE rfidcode=? AND card.branchId=?";
 
 	private static final String ACTIVATE_CARD="SELECT COUNT(card.id) FROM Card card,CardJob cardJob WHERE cardJob.cardId=card.id AND cardJob.branchId=card.branchId AND cardJob.jobTypeId=2 AND card.rfidcode=? AND card.branchId=?";
@@ -48,7 +57,7 @@ public class HandPosAction implements Action {
 
 	private static final String EXISTS_CARD_JOB="SELECT COUNT(id) FROM CardJob WHERE jobTypeId=3  AND processId=0 AND cardId=? AND branchId=? AND userId=? AND jobDate=?";
 
-	//sfcomm call
+	//servers call
 	
 	public int getUserId(String userName){
 		Connection conn=null;
@@ -506,9 +515,7 @@ public class HandPosAction implements Action {
 		return response += "#";
 	}
 	
-	private static final String EXISTS_USER="SELECT count(*) FROM User WHERE name=?";
-	
-	public static String processLogin(String userName,String userPassWord) {
+	public String processLogin(String userName,String userPassWord) {
 		String response = "*";
 
 		Connection conn=null;
@@ -569,12 +576,8 @@ public class HandPosAction implements Action {
         return response += "#";
 	}
 	
-	private static final String ADD_USER_INFO="INSERT INTO UserInfo(id,uuid) VALUES(?,?)";
-
-	private static final String ADD_USER="INSERT INTO User(id,name,password,userInfoId,branchId) VALUES(?,?,?,?,1)";
-
-	public void processRegister(String userName,String userPassWord,String serialNumber) throws SQLException{
-		if(log.isDebugEnabled()) log.debug("processRegister");	
+	public String saveUser(String operId,String userName,String userPassWord,String uuid) throws SQLException{
+		String response = "*";
 
 		Connection conn=null;
         PreparedStatement pstmt = null;
@@ -582,6 +585,9 @@ public class HandPosAction implements Action {
         try {
 			conn = DbConnectionManager.getConnection();
 			conn.setAutoCommit(false);
+			
+			Integer lId=new Integer(operId);
+			int branchId = getBranchId(lId);
 			
 			pstmt = conn.prepareStatement(EXISTS_USER);
             pstmt.setString(1, userName);
@@ -595,8 +601,8 @@ public class HandPosAction implements Action {
 
             if(count > 0) throw new NullPointerException("此用户已注册");
             
-            pstmt = conn.prepareStatement(EXISTS_CARD);
-            pstmt.setString(1, StringUtils.hash(serialNumber));
+            pstmt = conn.prepareStatement(EXIST_USER_CARD);
+            pstmt.setString(1, uuid);
             
             rs = pstmt.executeQuery();
             while (rs.next()) {
@@ -606,29 +612,36 @@ public class HandPosAction implements Action {
 
             if(count > 0) throw new NullPointerException("此卡已注册");
             
-            pstmt = conn.prepareStatement(ADD_USER_INFO);
-            int userInfoId = IDGenerator.getNextID(conn,"UserInfo");
-            pstmt.setLong(1, userInfoId);
-            pstmt.setString(2, StringUtils.hash(serialNumber));
-            pstmt.execute();
-            
             pstmt = conn.prepareStatement(ADD_USER);
-            pstmt.setLong(1, IDGenerator.getNextID(conn,"UserInfo"));
+            int userId = IDGenerator.getNextID(conn,"User");
+            pstmt.setLong(1, userId);
             pstmt.setString(2, userName);
-            pstmt.setString(3, StringUtils.hash(userPassWord));
-            pstmt.setInt(4, userInfoId);
+            pstmt.setString(3, userPassWord);
+            pstmt.setInt(4, branchId);
             pstmt.execute();
 
+            pstmt = conn.prepareStatement(ADD_USER_INFO);
+            pstmt.setLong(1, IDGenerator.getNextID(conn,"UserInfo"));
+            pstmt.setString(2, uuid);
+            pstmt.setInt(3, userId);
+            pstmt.setInt(4, branchId);
+            pstmt.execute();
+            
             conn.commit();
+            
+    		response +="0,"+Action.SAVE_USER;
 		}catch (NullPointerException e) {
 			conn.rollback();
+			response +="1,"+e.getMessage();
 			if(log.isErrorEnabled()) log.error("NullPointerException:"+e.getMessage());	
 		}catch (SQLException e) {
 			conn.rollback();
+			response +="2,"+e.getMessage();
 			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
 		}catch (Exception e) {
 			conn.rollback();
-			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
+			response +="3,"+e.getMessage();
+			if(log.isErrorEnabled()) log.error("Exception:"+e.getMessage());	
 		}finally {
 			conn.setAutoCommit(true);
 
@@ -637,9 +650,10 @@ public class HandPosAction implements Action {
 			if(conn != null)
 				conn.close();
 		}
+        return response += "#";
 	}
 	
-	public static String getKey(String value) {
+	public String getKey(String value) {
 		
 		Connection conn=null;
         PreparedStatement pstmt = null;
@@ -671,7 +685,7 @@ public class HandPosAction implements Action {
         return result;
 	}
 	
-	public static String nextRfidCode(String winery) {
+	public String nextRfidCode(String winery) {
 		String response = "*";
 
 		String nextCode=null;
@@ -934,6 +948,14 @@ public class HandPosAction implements Action {
 				    }
 					
 					response = saveCard(args[1],args[2],args[3],args[4],args[5]);
+
+					break;
+				case Action.SAVE_USER:
+					if(args.length !=6){
+						response = "参数不正确";
+				    }
+					
+					response = saveUser(args[1],args[2],args[3],args[4]);
 
 					break;
 				case Action.SEARCH_CARD_TYPES:
