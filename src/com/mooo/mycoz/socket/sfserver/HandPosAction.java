@@ -37,7 +37,7 @@ public class HandPosAction implements Action {
 	//save user
 	private static final String ADD_USER="INSERT INTO User(id,name,password,branchId) VALUES(?,?,?,?)";
 
-	private static final String ADD_USER_INFO="INSERT INTO UserInfo(id,uuid,userId,branchId) VALUES(?,?,?,?)";
+	private static final String ADD_USER_INFO="INSERT INTO UserInfo(id,uuid,mobile,userId,branchId) VALUES(?,?,?,?,?)";
 
 	private static final String REGISTER_CARD="SELECT COUNT(id) FROM Card WHERE rfidcode=? AND card.branchId=?";
 
@@ -576,7 +576,7 @@ public class HandPosAction implements Action {
         return response += "#";
 	}
 	
-	public String saveUser(String operId,String userName,String userPassWord,String uuid) throws SQLException{
+	public String saveUser(String operId,String userName,String userPassWord,String uuid,String mobile) throws SQLException{
 		String response = "*";
 
 		Connection conn=null;
@@ -623,8 +623,9 @@ public class HandPosAction implements Action {
             pstmt = conn.prepareStatement(ADD_USER_INFO);
             pstmt.setLong(1, IDGenerator.getNextID(conn,"UserInfo"));
             pstmt.setString(2, uuid);
-            pstmt.setInt(3, userId);
-            pstmt.setInt(4, branchId);
+            pstmt.setString(3, mobile);
+            pstmt.setInt(4, userId);
+            pstmt.setInt(5, branchId);
             pstmt.execute();
             
             conn.commit();
@@ -955,7 +956,7 @@ public class HandPosAction implements Action {
 						response = "参数不正确";
 				    }
 					
-					response = saveUser(args[1],args[2],args[3],args[4]);
+					response = saveUser(args[1],args[2],args[3],args[4],args[5]);
 
 					break;
 				case Action.SEARCH_CARD_TYPES:
