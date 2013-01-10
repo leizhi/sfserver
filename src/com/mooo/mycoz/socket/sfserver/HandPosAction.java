@@ -894,7 +894,8 @@ public class HandPosAction implements Action {
 //		String[] args = request.split(" +\n*");
 		String response = null;
 		try{
-			if(requestLine==null || !requestLine.startsWith("*")||!requestLine.endsWith("#")){
+			if(requestLine==null ||!requestLine.startsWith("*") || requestLine.indexOf("*")<0
+					||!requestLine.endsWith("#") || requestLine.indexOf("#")<0 ){
 				response = "数据格式不正确";
 			}
 			
