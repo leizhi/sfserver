@@ -69,8 +69,7 @@ public class SFServer{
 					if(log.isDebugEnabled())log.debug("<<<<<<<<<<<<LOOP Watch======");
 			}//Loop End
 		} catch (InterruptedException e) {
-			e.printStackTrace();
-			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
+			if(log.isErrorEnabled()) log.error("InterruptedException:" + e.getMessage());
 		} catch (Exception e) {
 			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 		} finally {
@@ -103,7 +102,7 @@ public class SFServer{
 		}
 
 		public void run() {
-			if(log.isDebugEnabled()) log.debug("SessionThread start...");
+			if(log.isDebugEnabled()) log.debug(socket.getRemoteSocketAddress()+"accept...");
 
 			try {
 //				String message = "--- Welcome to this chatroom 欢迎---";
@@ -115,7 +114,6 @@ public class SFServer{
 				while (forever){			
 					requestLine = read.readLine();
 
-
 					if(requestLine==null || requestLine.equals("3")|| requestLine.equals("*3#"))
 						break;
 					
@@ -126,18 +124,25 @@ public class SFServer{
 					String response = ActionFactory.getInstance().forward(requestLine);
 					//打印响应数据
 					if(log.isDebugEnabled()) log.debug("response:" + response);
+					if(response.equals("Unsafe")){
+						print.println("警告:请不要尝试任何攻击,我们将会做出法律回应!");
+						print.flush();
+						if(log.isDebugEnabled()) log.debug("检测到攻击:" + socket.getRemoteSocketAddress());
+						
+						throw new Exception("Unsafe");
+					}
+
 					print.println(response);
 					print.flush();
-					
 					//wait input
 					//print.print(">");
 				}//end while
 				
 			} catch (Exception e) {
-				if(log.isErrorEnabled()) log.error("客户失去连接 Exception:" + e.getMessage());
+				if(log.isErrorEnabled()) log.error("服务器异常 Exception:" + e.getMessage());
 			} finally {
 				try {
-					if(log.isDebugEnabled()) log.debug("客户退出...");
+					if(log.isDebugEnabled()) log.debug("主动关闭连接");
 					
 					if( in !=null)
 						in.close();
@@ -147,11 +152,13 @@ public class SFServer{
 						socket.close();
 					
 					threadPool.remove(this);
+					
+					if(log.isDebugEnabled()) log.debug("成功关闭连接");
 				} catch (IOException e) {
-					if(log.isErrorEnabled()) log.error("客户失去连接 Exception:" + e.getMessage());
+					if(log.isErrorEnabled()) log.error("客户失去连接 自动关闭连接 Exception:" + e.getMessage());
 				}
 			}
-			if(log.isDebugEnabled()) log.debug("SessionThread end...");
+			if(log.isDebugEnabled()) log.debug(socket.getRemoteSocketAddress()+" close...");
 		}//run end
 	}
 	

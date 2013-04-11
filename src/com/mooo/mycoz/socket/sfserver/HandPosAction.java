@@ -87,7 +87,7 @@ public class HandPosAction implements Action {
 				if(conn != null)
 					conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				if(log.isErrorEnabled()) log.error("SQLException:" + e.getMessage());
 			}
 			
 		}
@@ -118,7 +118,7 @@ public class HandPosAction implements Action {
 				if(conn != null)
 					conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				if(log.isErrorEnabled()) log.error("SQLException:" + e.getMessage());
 			}
 			
 		}
@@ -161,7 +161,7 @@ public class HandPosAction implements Action {
 				if(conn != null)
 					conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				if(log.isErrorEnabled()) log.error("SQLException:" + e.getMessage());
 			}
 			
 		}
@@ -197,7 +197,6 @@ public class HandPosAction implements Action {
 			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
 		}catch (Exception e) {
 			if(log.isErrorEnabled()) log.error("SQLException:"+e.getMessage());	
-	   
 		}finally {
 			try {
 				if(pstmt != null)
@@ -205,7 +204,7 @@ public class HandPosAction implements Action {
 				if(conn != null)
 					conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				if(log.isErrorEnabled()) log.error("SQLException:" + e.getMessage());
 			}
 			
 		}
@@ -288,11 +287,11 @@ public class HandPosAction implements Action {
 			RET=0;
         }catch (CardException e) {
 			conn.rollback();
-			if(log.isErrorEnabled()) log.error("CardException:"+e.getMessage());
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 		}catch (Exception e) {
 			conn.rollback();
-			if(log.isErrorEnabled()) log.error("Exception:"+e.getMessage());
 			RET=3;
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 	   }finally {
 			conn.setAutoCommit(true);
 			
@@ -348,6 +347,7 @@ public class HandPosAction implements Action {
 			
 		}catch(Exception e){
 			response=e.getMessage();
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 		}
 		
 		return response;
@@ -440,8 +440,7 @@ public class HandPosAction implements Action {
 			response +="1,"+e.getMessage();
 			conn.rollback();
 			
-			if(log.isDebugEnabled()) log.debug("CardDBObject Exception="+e.getMessage());
-			e.printStackTrace();
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 		}finally{
 			conn.setAutoCommit(true);
 			if(pstmt != null)
@@ -501,7 +500,7 @@ public class HandPosAction implements Action {
 			conn.rollback();
 			response +="1;"+e.getMessage();
 
-			e.printStackTrace();
+			if(log.isErrorEnabled()) log.error("SQLException:" + e.getMessage());
 		}finally{
 			conn.setAutoCommit(true);
 			
@@ -560,7 +559,7 @@ public class HandPosAction implements Action {
 		}catch (Exception e) {
 			response +="1;"+e.getMessage();
 			
-			e.printStackTrace();
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 	   }finally {
 			try {
 				if(pstmt != null)
@@ -568,7 +567,7 @@ public class HandPosAction implements Action {
 				if(conn != null)
 					conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				if(log.isErrorEnabled()) log.error("SQLException:" + e.getMessage());
 			}
 			
 		}
@@ -671,7 +670,7 @@ public class HandPosAction implements Action {
             	result = rs.getString(1);
             }
 		}catch (SQLException e) {
-			e.printStackTrace();
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 	   }finally {
 			try {
 				if(pstmt != null)
@@ -679,7 +678,7 @@ public class HandPosAction implements Action {
 				if(conn != null)
 					conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				if(log.isErrorEnabled()) log.error("SQLException:" + e.getMessage());
 			}
 			
 		}
@@ -748,7 +747,7 @@ public class HandPosAction implements Action {
             response +="0;"+Action.NEXT_RFID_CODE+";"+nextCode;
 		}catch (Exception e) {
 			response +="1;"+e.getMessage();
-			e.printStackTrace();
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 	   }finally {
 			try {
 				if(pstmt != null)
@@ -756,7 +755,7 @@ public class HandPosAction implements Action {
 				if(conn != null)
 					conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				if(log.isErrorEnabled()) log.error("SQLException:" + e.getMessage());
 			}
 			
 		}
@@ -788,7 +787,7 @@ public class HandPosAction implements Action {
 			response +="0;"+Action.EXIST_CARD;
 		} catch (Exception e) {
 			response +="1;"+e.getMessage();
-			System.out.println("Exception="+e.getMessage());
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 		}finally{
 
 			try {
@@ -797,7 +796,7 @@ public class HandPosAction implements Action {
 				if(conn != null)
 					conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				if(log.isErrorEnabled()) log.error("SQLException:" + e.getMessage());
 			}
 		}
 		
@@ -832,7 +831,7 @@ public class HandPosAction implements Action {
 			
 		} catch (Exception e) {
 			response +="1;"+e.getMessage();
-			System.out.println("Exception="+e.getMessage());
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 		}finally{
 
 			try {
@@ -841,7 +840,7 @@ public class HandPosAction implements Action {
 				if(conn != null)
 					conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				if(log.isErrorEnabled()) log.error("SQLException:" + e.getMessage());
 			}
 		}
 		
@@ -874,7 +873,7 @@ public class HandPosAction implements Action {
 			
 		} catch (Exception e) {
 			response +="1;"+e.getMessage();
-			System.out.println("Exception="+e.getMessage());
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 		}finally{
 
 			try {
@@ -883,7 +882,7 @@ public class HandPosAction implements Action {
 				if(conn != null)
 					conn.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				if(log.isErrorEnabled()) log.error("SQLException:" + e.getMessage());
 			}
 		}
 		
@@ -894,10 +893,11 @@ public class HandPosAction implements Action {
 //		String[] args = request.split(" +\n*");
 		String response = null;
 		try{
-			if(requestLine==null ||!requestLine.startsWith("*") || requestLine.indexOf("*")<0
-					||!requestLine.endsWith("#") || requestLine.indexOf("#")<0 ){
-				response = "数据格式不正确";
+			if(requestLine==null || requestLine.length()<3
+					||!requestLine.startsWith("*") ||!requestLine.endsWith("#")){
+				return response = "Unsafe";//数据格式不正确
 			}
+			System.out.println("l:"+requestLine.length());
 			
 			String doRequest=requestLine.substring(requestLine.indexOf("*")+1,
 					requestLine.lastIndexOf("#"));
@@ -989,7 +989,7 @@ public class HandPosAction implements Action {
 			   }
 		}catch(Exception e){
 			response = "请求处理异常";
-			e.printStackTrace();
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 		}
 		
 		return response;
