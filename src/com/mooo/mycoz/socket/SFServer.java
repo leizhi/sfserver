@@ -70,13 +70,11 @@ public class SFServer{
 			}//Loop End
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-			if(log.isDebugEnabled()) log.debug("Exception:" + e.getMessage());
-			if(log.isDebugEnabled())log.debug("Exception:" + e.getMessage());
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 		} catch (Exception e) {
-			e.printStackTrace();
-			if(log.isDebugEnabled()) log.debug("Exception:" + e.getMessage());
-			if(log.isDebugEnabled())log.debug("Exception:" + e.getMessage());
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
 		} finally {
+			if(log.isDebugEnabled()) log.debug("sSocket close");
 			sSocket.close();
 		}
 	}
@@ -136,10 +134,7 @@ public class SFServer{
 				}//end while
 				
 			} catch (Exception e) {
-				e.printStackTrace();
-				if(log.isDebugEnabled()) log.debug("客户失去连接...");
-	    		if(log.isDebugEnabled()) log.debug("客户失去连接...");	
-
+				if(log.isErrorEnabled()) log.error("客户失去连接 Exception:" + e.getMessage());
 			} finally {
 				try {
 					if(log.isDebugEnabled()) log.debug("客户退出...");
@@ -153,7 +148,7 @@ public class SFServer{
 					
 					threadPool.remove(this);
 				} catch (IOException e) {
-					e.printStackTrace();
+					if(log.isErrorEnabled()) log.error("客户失去连接 Exception:" + e.getMessage());
 				}
 			}
 			if(log.isDebugEnabled()) log.debug("SessionThread end...");
