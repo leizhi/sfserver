@@ -32,12 +32,10 @@ public class HandPosAction implements Action {
 	
 	private static final String EXISTS_USER="SELECT count(*) FROM User WHERE name=?";
 
-	private static final String EXIST_USER_CARD="SELECT count(*) FROM UserInfo i,User u WHERE i.userId=u.id AND u.branchId=i.branchId AND i.uuid=?";
+	private static final String EXIST_USER_CARD="SELECT count(*) FROM User WHERE uuid=?";
 
 	//save user
-	private static final String ADD_USER="INSERT INTO User(id,name,password,branchId) VALUES(?,?,?,?)";
-
-	private static final String ADD_USER_INFO="INSERT INTO UserInfo(id,uuid,mobile,userId,branchId) VALUES(?,?,?,?,?)";
+	private static final String ADD_USER="INSERT INTO User(id,name,password,uuid,mobile,branchId) VALUES(?,?,?,?,?,?)";
 
 	private static final String REGISTER_CARD="SELECT COUNT(id) FROM Card WHERE rfidcode=? AND card.branchId=?";
 
@@ -616,17 +614,11 @@ public class HandPosAction implements Action {
             pstmt.setLong(1, userId);
             pstmt.setString(2, userName);
             pstmt.setString(3, userPassWord);
-            pstmt.setInt(4, branchId);
+            pstmt.setString(4, uuid);
+            pstmt.setString(5, mobile);
+            pstmt.setInt(6, branchId);
             pstmt.execute();
 
-            pstmt = conn.prepareStatement(ADD_USER_INFO);
-            pstmt.setLong(1, IDGenerator.getNextID(conn,"UserInfo"));
-            pstmt.setString(2, uuid);
-            pstmt.setString(3, mobile);
-            pstmt.setInt(4, userId);
-            pstmt.setInt(5, branchId);
-            pstmt.execute();
-            
             conn.commit();
             
     		response +="0;"+Action.SAVE_USER;
