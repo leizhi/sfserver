@@ -35,7 +35,7 @@ public class HandPosAction implements Action {
 	private static final String EXIST_USER_CARD="SELECT count(*) FROM User WHERE uuid=?";
 
 	//save user
-	private static final String ADD_USER="INSERT INTO User(id,name,password,uuid,mobile,branchId) VALUES(?,?,?,?,?,?)";
+	private static final String ADD_USER="INSERT INTO User(id,name,password,uuid,mobile,branchId,typeId) VALUES(?,?,?,?,?,?,1)";
 
 	private static final String REGISTER_CARD="SELECT COUNT(id) FROM Card WHERE rfidcode=? AND card.branchId=?";
 
