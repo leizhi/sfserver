@@ -45,7 +45,7 @@ public class HandPosAction implements Action {
 
 	private static final String QUERY_CARD="SELECT card.rfidcode,wineJar.abbreviation,wineType.definition,wineLevel.definition,alcohol,volume,volumeUnit,material,card.branchId FROM Card card,WineJar wineJar,wineShared.WineType wineType,wineShared.WineLevel wineLevel WHERE wineJar.id=card.wineJarId AND wineJar.wineTypeId=wineType.id AND wineJar.wineLevelId=wineLevel.id AND card.rfidcode=?";
 
-	private static final String ADD_CARD="INSERT INTO Card(id,rfidcode,uuid,wineryId,wineJarId,branchId,processId,cardTypeId) VALUES(?,?,?,?,0,?,0,?)";
+	private static final String ADD_CARD="INSERT INTO Card(id,rfidcode,uuid,wineryId,branchId,processId,cardTypeId) VALUES(?,?,?,?,?,0,?)";
 
 	private static final String ADD_CARD_JOB="INSERT INTO CardJob(id,jobDate,cardId,userId,jobTypeId,branchId,processId,spotNormal,cardNormal) VALUES(?,?,?,?,?,?,0,'Y','Y')";
 
