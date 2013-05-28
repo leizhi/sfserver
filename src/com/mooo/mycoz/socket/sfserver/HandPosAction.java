@@ -882,14 +882,12 @@ public class HandPosAction implements Action {
 	}
 	
 	public String forward(String requestLine) {
-//		String[] args = request.split(" +\n*");
 		String response = null;
 		try{
 			if(requestLine==null || requestLine.length()<3
 					||!requestLine.startsWith("*") ||!requestLine.endsWith("#")){
 				return response = "Unsafe";//数据格式不正确
 			}
-			System.out.println("l:"+requestLine.length());
 			
 			String doRequest=requestLine.substring(requestLine.indexOf("*")+1,
 					requestLine.lastIndexOf("#"));
