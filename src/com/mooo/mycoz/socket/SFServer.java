@@ -97,8 +97,8 @@ public class SFServer{
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
 
-			read = new BufferedReader(new InputStreamReader(in,"GBK"));  
-			print = new PrintStream(out,true,"GBK");
+			read = new BufferedReader(new InputStreamReader(in,"GB18030")); 
+			print = new PrintStream(out,true,"GB18030");
 		}
 
 		public void run() {
@@ -126,14 +126,14 @@ public class SFServer{
 					if(log.isDebugEnabled()) log.debug("response:" + response);
 					if(response.equals("Unsafe")){
 						print.println("警告:请不要尝试任何攻击,我们将会做出法律回应!");
-						print.flush();
+						//print.flush();
 						if(log.isDebugEnabled()) log.debug("检测到攻击:" + socket.getRemoteSocketAddress());
 						
 						throw new Exception("Unsafe");
 					}
 
 					print.println(response);
-					print.flush();
+					//print.flush();
 					//wait input
 					//print.print(">");
 				}//end while

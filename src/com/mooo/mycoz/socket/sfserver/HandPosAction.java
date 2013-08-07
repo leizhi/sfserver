@@ -467,7 +467,7 @@ public class HandPosAction implements Action {
 			pstmt.setString(2, rfidcode);
 			pstmt.setString(3, uuid);
 
-			int wineryId = IDGenerator.getId("Winery", "definition", wineryName);
+			int wineryId = IDGenerator.getId("Winery", "enterpriseName", wineryName);
 			pstmt.setInt(4, wineryId);
 			
 			Integer lId=new Integer(userId);
@@ -795,7 +795,7 @@ public class HandPosAction implements Action {
         return response += "#";
 	}
 	
-	private static final String SEARCH_WINERYS="SELECT w.definition FROM Winery w,WineryMap wm WHERE wm.wineryId=w.id AND wm.userId=? ORDER BY w.id";
+	private static final String SEARCH_WINERYS="SELECT w.enterpriseName FROM Winery w,WineryMap wm WHERE wm.wineryId=w.id AND wm.userId=? ORDER BY w.id";
 
 	public String searchWinerys(String  userId){
 		String response = "*";
