@@ -651,7 +651,7 @@ public class HandPosAction implements Action {
         PreparedStatement pstmt = null;
         String result = null;
         try {
-        	String sql = "SELECT abbreviation FROM Winery WHERE definition=?";
+        	String sql = "SELECT shortName FROM Winery WHERE enterpriseName=?";
         	
 			conn = DbConnectionManager.getConnection();
             pstmt = conn.prepareStatement(sql);
