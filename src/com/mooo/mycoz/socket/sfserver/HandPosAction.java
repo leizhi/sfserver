@@ -881,6 +881,18 @@ public class HandPosAction implements Action {
         return response += "#";
 	}
 	
+	public String getTime(){
+		String response = "*";
+
+		try{
+			response +="0;"+Action.GET_TIME+";"+CalendarUtils.dtformat(new Date());
+		} catch (Exception e) {
+			response +="1;"+e.getMessage();
+			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
+		}
+        return response += "#";
+	}
+	
 	public String forward(String requestLine) {
 		String response = null;
 		try{
@@ -972,6 +984,15 @@ public class HandPosAction implements Action {
 				    }
 					
 					response=processLogin(args[1],args[2]);
+					
+					break;
+				case Action.GET_TIME:
+
+					if(args.length !=1){
+						response = "参数不正确";
+				    }
+					
+					response=getTime();
 					
 					break;
 				default:

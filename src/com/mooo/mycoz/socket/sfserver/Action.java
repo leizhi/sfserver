@@ -20,6 +20,8 @@ public interface Action {
 
 	public final static byte SAVE_USER = 15;
 
+	public final static byte GET_TIME = 70;
+	
 	public final static byte ACTION_LOGIN = 80;
 	
 	public final static byte ACTION_EXIT1 = 81;
