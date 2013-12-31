@@ -156,7 +156,7 @@ public class SFServer{
 					if(log.isErrorEnabled()) log.error("客户失去连接 自动关闭连接 Exception:" + e.getMessage());
 				}
 			}
-			if(log.isDebugEnabled()) log.debug(socket.getRemoteSocketAddress()+" close at:"+new Date());
+			if(log.isDebugEnabled()) log.debug("服务线程主动关闭客户端:"+socket.getRemoteSocketAddress()+" close at:"+new Date());
 		}//run end
 	}
 	
