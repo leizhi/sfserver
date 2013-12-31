@@ -301,10 +301,15 @@ public class HandPosAction implements Action {
         return RET;
 	}
 	
-	public String synchronize(String userName,String userPassword,String buffer){
+	public String synchronize(String ver,String userName,String userPassword,String buffer){
 		String response = "";
-		
+		Integer mVer=213;
 		try{
+			mVer = new Integer(ver);
+			
+			if(mVer==null || mVer<214)
+				throw new NullPointerException("*3;此版本过低;#;#");//版本验证
+			
 			if(getUserId(userName)<0)
 				throw new NullPointerException("*1#");//无此用户
 			
@@ -926,11 +931,11 @@ public class HandPosAction implements Action {
 					break;
 				case Action.ACTION_SYN:
 					
-					if(args.length !=4){
+					if(args.length !=5){
 						response = "参数不正确";
 				    }
 					
-					response = synchronize(args[1],args[2],args[3]);
+					response = synchronize(args[1],args[2],args[3],args[4]);
 					break;
 				case Action.EXIST_CARD:
 					if(args.length !=2){
