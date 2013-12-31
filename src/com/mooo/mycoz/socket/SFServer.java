@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Date;
 import java.util.Vector;
 
 import org.apache.commons.logging.Log;
@@ -17,8 +18,6 @@ import com.mooo.mycoz.socket.sfserver.ActionFactory;
 
 public class SFServer{
 	private static Log log = LogFactory.getLog(SFServer.class);
-
-//	private static Object initLock = new Object();
 
 	private Vector<Thread> threadPool;
 	private int maxConnMSec;
@@ -38,44 +37,43 @@ public class SFServer{
 			maxConnMSec = 30000;
 		}
 
-		try {
-			//主线程进入轮询模式
-			boolean forever = true;
-			while (forever) {
-					if(maxConns > 0 && threadPool.size() == maxConns){
-						throw new Exception("线程池满");
-					}
-					
-					//计算连接数
-					int runCount = 0;
-					for (Thread threadObj : threadPool) {
-						if (threadObj.isAlive())
-							runCount++;
-					}
-					if(log.isDebugEnabled())log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
-					if(log.isDebugEnabled()) log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
+		
+		//主线程进入轮询模式
+		boolean forever = true;
+		while (forever) {
+			try {
+				if(maxConns > 0 && threadPool.size() == maxConns){
+					throw new Exception("线程池满");
+				}
+				
+				//计算连接数
+				int runCount = 0;
+				for (Thread threadObj : threadPool) {
+					if (threadObj.isAlive())
+						runCount++;
+				}
+				if(log.isDebugEnabled())log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
+				if(log.isDebugEnabled()) log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
 
 //					synchronized (initLock) {
 //						wait(1000*10); //10 seconds
 //					}
-					
-					//处理客户端请求并生成子线程
-					Thread thread = new Thread(new SessionThread(sSocket.accept()));
-					thread.start();
+				
+				//处理客户端请求并生成子线程
+				Thread thread = new Thread(new SessionThread(sSocket.accept()));
+				thread.start();
 //					thread.join();
-					
-					Thread.sleep(20);//wait 20ms
-					threadPool.add(thread);
-					if(log.isDebugEnabled())log.debug("<<<<<<<<<<<<LOOP Watch======");
-			}//Loop End
-		} catch (InterruptedException e) {
-			if(log.isErrorEnabled()) log.error("InterruptedException:" + e.getMessage());
-		} catch (Exception e) {
-			if(log.isErrorEnabled()) log.error("Exception:" + e.getMessage());
-		} finally {
-			if(log.isDebugEnabled()) log.debug("sSocket close");
-			sSocket.close();
-		}
+				
+				Thread.sleep(20);//wait 20ms
+				threadPool.add(thread);
+				if(log.isDebugEnabled())log.debug("<<<<<<<<<<<<LOOP Watch======");
+			} catch (Exception e) {
+				if(log.isErrorEnabled()) log.error("主线程异常:" + e.getMessage());
+			}
+		}//Loop End
+		
+		if(log.isDebugEnabled()) log.debug("sSocket close at:"+new Date());
+		sSocket.close();
 	}
 
 	/*
@@ -139,10 +137,10 @@ public class SFServer{
 				}//end while
 				
 			} catch (Exception e) {
-				if(log.isErrorEnabled()) log.error("服务器异常 Exception:" + e.getMessage());
+				if(log.isErrorEnabled()) log.error("服务器线程异常:" + e.getMessage());
 			} finally {
 				try {
-					if(log.isDebugEnabled()) log.debug("主动关闭连接");
+					if(log.isDebugEnabled()) log.debug("服务器线程主动关闭连接");
 					
 					if( in !=null)
 						in.close();
@@ -153,12 +151,12 @@ public class SFServer{
 					
 					threadPool.remove(this);
 					
-					if(log.isDebugEnabled()) log.debug("成功关闭连接");
+					if(log.isDebugEnabled()) log.debug("服务器线程成功关闭连接");
 				} catch (IOException e) {
 					if(log.isErrorEnabled()) log.error("客户失去连接 自动关闭连接 Exception:" + e.getMessage());
 				}
 			}
-			if(log.isDebugEnabled()) log.debug(socket.getRemoteSocketAddress()+" close...");
+			if(log.isDebugEnabled()) log.debug(socket.getRemoteSocketAddress()+" close at:"+new Date());
 		}//run end
 	}
 	
