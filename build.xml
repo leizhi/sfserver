@@ -131,4 +131,35 @@
 		</java>
 	</target>
 	
+    <target name="test-nios">
+      <java failonerror="true" fork="true" classname="com.mooo.mycoz.socket.NioTcpServer">
+          <classpath>
+              <path location="${build.dir}/classes"></path>
+              <fileset dir="lib" includes="**/*.jar"></fileset>
+          </classpath>
+         
+          <arg value="arg0"/>
+      </java>
+	</target>
+
+    <target name="test-nioc">
+      <java failonerror="true" fork="true" classname="com.mooo.mycoz.socket.NioTcpClient">
+          <classpath>
+              <path location="${build.dir}/classes"></path>
+              <fileset dir="lib" includes="**/*.jar"></fileset>
+          </classpath>
+          <arg value="arg0"/>
+      </java>
+	</target>
+
+    <target name="test-sc">
+      <java failonerror="true" fork="true" classname="com.mooo.mycoz.socket.SimpleClient">
+          <classpath>
+              <path location="${build.dir}/classes"></path>
+              <fileset dir="lib" includes="**/*.jar"></fileset>
+          </classpath>
+          <arg value="arg0"/>
+      </java>
+	</target>
+
 </project>

@@ -70,9 +70,14 @@ public class SimpleClient {
 					if(log.isDebugEnabled())log.debug("write end/read begin expendsTime:"+expendsTime+"\t in.available():"+in.available());
 	
 					// read do
-					buffer=read.readLine().trim();
+					if(log.isDebugEnabled())log.debug("read:"+read);
+					if(log.isDebugEnabled())log.debug("buffer:"+buffer);
+					if(log.isDebugEnabled())log.debug("readLine:"+read.readLine());
+					buffer=read.readLine();
+                    if(buffer!=null) buffer=buffer.trim();
 					System.out.println(buffer);
-	
+					if(log.isDebugEnabled())log.debug("readLine buffer:"+buffer);
+
 					finishTime = System.currentTimeMillis();
 					hours = (finishTime - startTime) / 1000 / 60 / 60;
 					minutes = (finishTime - startTime) / 1000 / 60 - hours * 60;
