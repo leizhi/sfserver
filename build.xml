@@ -80,8 +80,7 @@
 	</target>
 	
 	<!-- 把所有目标文件打包  -->
-<!--
-	<target name="jar" depends="unziplib,compile">
+	<target name="onejar" depends="unziplib,compile">
 		<echo message="${ant.project.name}: ${ant.file}"/>
 		
 		<jar basedir="${build.dir}/classes" destfile="${dist.dir}/${jar-file-name}">    
@@ -95,7 +94,7 @@
 			</fileset>
 		</jar>
 	</target>
--->
+
 	<!-- 分离第3方包打包-->
 	<target name="copylib">
 		<copy todir="${dist.dir}">
