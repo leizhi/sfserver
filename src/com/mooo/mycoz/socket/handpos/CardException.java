@@ -1,4 +1,4 @@
-package com.mooo.mycoz.socket.sfserver;
+package com.mooo.mycoz.socket.handpos;
 
 public class CardException extends Exception{
 

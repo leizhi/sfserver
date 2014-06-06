@@ -1,4 +1,4 @@
-package com.mooo.mycoz.socket;
+package com.mooo.mycoz.socket.client;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -91,7 +91,7 @@ public class SimpleClient {
 							+ port +"\t expends:   " + hours + ":" + minutes + ":"	
 							+ seconds+"\t expendsTime:"+expendsTime);
 					
-					Thread.sleep(500);
+					//Thread.sleep(500);
 				}//loop while
 			} catch (UnknownHostException e) {
 				e.printStackTrace();

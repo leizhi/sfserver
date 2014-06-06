@@ -1,4 +1,4 @@
-package com.mooo.mycoz.socket;
+package com.mooo.mycoz.socket.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import java.util.Vector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.mooo.mycoz.socket.sfserver.ActionFactory;
+import com.mooo.mycoz.socket.handpos.ActionFactory;
 
 public class SFServer{
 	private static Log log = LogFactory.getLog(SFServer.class);

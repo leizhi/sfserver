@@ -1,4 +1,4 @@
-package com.mooo.mycoz.socket.sfserver;
+package com.mooo.mycoz.socket.handpos;
 
 import com.mooo.mycoz.db.DbConfig;
 

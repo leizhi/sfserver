@@ -14,7 +14,7 @@
 	<property name="dist.dir" value="dist" />
 	
 	<property name="jar-file-name" value="${ant.project.name}.jar"/>
-	<property name="main-class" value="com.mooo.mycoz.socket.SFServer"/> <!-- main-class 入口类-->
+	<property name="main-class" value="com.mooo.mycoz.socket.server.SFServer"/> <!-- main-class 入口类-->
 
 	<property environment="env"/><!-- 访问环境变量 -->
 	<property name="ant.home" value="${env.ANT_HOME}"/>
@@ -131,8 +131,8 @@
 		</java>
 	</target>
 	
-    <target name="test-nios">
-      <java failonerror="true" fork="true" classname="com.mooo.mycoz.socket.NioTcpServer">
+    <target name="test-sc">
+      <java failonerror="true" fork="true" classname="com.mooo.mycoz.socket.client.SimpleClient">
           <classpath>
               <path location="${build.dir}/classes"></path>
               <fileset dir="lib" includes="**/*.jar"></fileset>
@@ -142,24 +142,14 @@
       </java>
 	</target>
 
-    <target name="test-nioc">
-      <java failonerror="true" fork="true" classname="com.mooo.mycoz.socket.NioTcpClient">
+    <target name="test-scanf">
+      <java failonerror="true" fork="true" classname="com.mooo.mycoz.socket.client.ScanClient">
           <classpath>
               <path location="${build.dir}/classes"></path>
               <fileset dir="lib" includes="**/*.jar"></fileset>
           </classpath>
+         
           <arg value="arg0"/>
       </java>
 	</target>
-
-    <target name="test-sc">
-      <java failonerror="true" fork="true" classname="com.mooo.mycoz.socket.SimpleClient">
-          <classpath>
-              <path location="${build.dir}/classes"></path>
-              <fileset dir="lib" includes="**/*.jar"></fileset>
-          </classpath>
-          <arg value="arg0"/>
-      </java>
-	</target>
-
 </project>

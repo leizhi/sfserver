@@ -1,4 +1,4 @@
-package com.mooo.mycoz.socket;
+package com.mooo.mycoz.socket.client;
 
 import java.io.IOException;
 import java.io.InputStream;
