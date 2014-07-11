@@ -24,9 +24,10 @@ public class SFServer{
 	
 	private ServerSocket sSocket;
 	private static int SERVICE_PORT = 8000;
-	
+	private static int SERVICE_BACKLOG = 1024;
+		
 	public SFServer(int maxConns,double maxConnTime) throws IOException {
-		sSocket = new ServerSocket(SERVICE_PORT);
+		sSocket = new ServerSocket(SERVICE_PORT,SERVICE_BACKLOG);
 
 		if(log.isDebugEnabled()) log.debug("服务器启动");
 		
@@ -62,7 +63,7 @@ public class SFServer{
 				//处理客户端请求并生成子线程
 				Thread thread = new Thread(new SessionThread(sSocket.accept()));
 				thread.start();
-//					thread.join();
+//				thread.join();
 				
 				Thread.sleep(20);//wait 20ms
 				threadPool.add(thread);
