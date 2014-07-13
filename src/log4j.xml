@@ -15,6 +15,14 @@
                     <param name="ConversionPattern" value="%d %-5p [%t] %C{2} (%l) - %m\n"/>
             </layout>
     </appender>
+    <appender name="mydbLog" class="org.apache.log4j.RollingFileAppender">
+            <param name="MaxFileSize" value="2000KB"/>
+            <param name="File" value="mydbLog.log"/>
+            <param name="Append" value="true"/>
+            <layout class="org.apache.log4j.PatternLayout">
+                    <param name="ConversionPattern" value="%d %-5p [%t] %C{2} (%l) - %m\n"/>
+            </layout>
+    </appender>
     
 	<appender name="console" class="org.apache.log4j.ConsoleAppender">
 		<param name="Target" value="System.Out"/>
@@ -29,6 +37,11 @@
         <appender-ref ref="sfserverLog"/>
     </category>
 
+    <category name="com.mooo.mycoz.db" additivity="false">
+        <priority value="debug"/>
+        <appender-ref ref="mydbLog"/>
+    </category>
+    
 	<!-- the one and only root category -->
 	<root>
 		<priority value="warn"/>
