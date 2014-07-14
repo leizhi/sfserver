@@ -20,63 +20,70 @@ public class SFServer{
 	private static Log log = LogFactory.getLog(SFServer.class);
 
 	private Vector<Thread> threadPool;
-	private int maxConnMSec;
 	
-	private ServerSocket sSocket;
 	private static int SERVICE_PORT = 8000;
 	private static int SERVICE_BACKLOG = 1024;
 		
-	public SFServer(int maxConns,double maxConnTime) throws IOException {
-		sSocket = new ServerSocket(SERVICE_PORT,SERVICE_BACKLOG);
-
-		if(log.isDebugEnabled()) log.debug("服务器启动");
-		
-		threadPool = new Vector<Thread>(maxConns);
-
-		maxConnMSec = (int) (maxConnTime * 86400000.0); // 86400 sec/day
-		if (maxConnMSec < 30000 && maxConnMSec > 0) { // Recycle no less than 30 seconds.
-			maxConnMSec = 30000;
-		}
-
-		
-		//主线程进入轮询模式
-		boolean forever = true;
-		while (forever) {
-			try {
-				if(maxConns > 0 && threadPool.size() == maxConns){
-					throw new Exception("线程池满");
-				}
-				
-				//计算连接数
-				int runCount = 0;
-				for (Thread threadObj : threadPool) {
-					if (threadObj.isAlive())
-						runCount++;
-				}
-				if(log.isDebugEnabled())log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
-				if(log.isDebugEnabled()) log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
-
-//					synchronized (initLock) {
-//						wait(1000*10); //10 seconds
-//					}
-				
-				//处理客户端请求并生成子线程
-				Thread thread = new Thread(new SessionThread(sSocket.accept()));
-				thread.start();
-//				thread.join();
-				
-				Thread.sleep(20);//wait 20ms
-				threadPool.add(thread);
-				if(log.isDebugEnabled())log.debug("<<<<<<<<<<<<LOOP Watch======");
-			} catch (Exception e) {
-				if(log.isErrorEnabled()) log.error("主线程异常:" + e.getMessage());
-			}
-		}//Loop End
-		
-		if(log.isDebugEnabled()) log.debug("sSocket close at:"+new Date());
-		sSocket.close();
+	public SFServer(){
+		Thread thread = new Thread(new SwitchThread(SERVICE_BACKLOG));
+		thread.start();
 	}
-
+	
+	public class SwitchThread implements Runnable {
+		int maxConns = SERVICE_BACKLOG;
+		
+		public SwitchThread(int maxConns){
+			this.maxConns = maxConns;
+		}
+		
+		public void run() {
+			if(log.isDebugEnabled()) log.debug("服务器启动");
+			
+			threadPool = new Vector<Thread>(maxConns);
+	
+			try {
+				ServerSocket sSocket = new ServerSocket(SERVICE_PORT,SERVICE_BACKLOG);
+				
+				//主线程进入轮询模式
+				boolean forever = true;
+				while (forever) {
+					
+					try {
+						if(maxConns > 0 && threadPool.size() == maxConns){
+							throw new Exception("线程池满");
+						}
+						
+						//计算连接数
+						int runCount = 0;
+						for (Thread threadObj : threadPool) {
+							if (threadObj.isAlive())
+								runCount++;
+						}
+						if(log.isDebugEnabled())log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
+						if(log.isDebugEnabled()) log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
+		
+						//处理客户端请求并生成子线程
+						Thread thread = new Thread(new SessionThread(sSocket.accept()));
+						thread.start();
+		//				thread.join();
+						
+//						Thread.sleep(20);//wait 20ms
+						threadPool.add(thread);
+					} catch (Exception e) {
+						if(log.isErrorEnabled()) log.error("主线程服务异常:" + e.getMessage());
+					}
+					if(log.isDebugEnabled())log.debug("<<<<<<<<<<<<LOOP Watch======");
+				}//Loop End
+		
+			if(log.isDebugEnabled()) log.debug("sSocket close at:"+new Date());
+			sSocket.close();
+		} catch (Exception e) {
+			if(log.isErrorEnabled()) log.error("服务器结束于异常:" + e.getMessage());
+		} finally {
+			if(log.isErrorEnabled()) log.error("服务器停止于:"+new Date());
+		}
+		}
+	}
 	/*
 	 * 访问子线程
 	 */
@@ -161,7 +168,7 @@ public class SFServer{
 		}//run end
 	}
 	
-	public static void main(String[] args) throws IOException {
-		new SFServer(0,0);
+	public static void main(String[] args){
+		new SFServer();
 	}
 }
