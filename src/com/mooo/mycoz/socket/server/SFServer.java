@@ -9,7 +9,6 @@ import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
-import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -18,11 +17,11 @@ import com.mooo.mycoz.socket.handpos.ActionFactory;
 
 public class SFServer{
 	private static Log log = LogFactory.getLog(SFServer.class);
-
-	private Vector<Thread> threadPool;
 	
 	private static int SERVICE_PORT = 8000;
 	private static int SERVICE_BACKLOG = 1024;
+
+	private long[] threadPool;
 		
 	public SFServer(){
 		Thread thread = new Thread(new SwitchThread(SERVICE_BACKLOG));
@@ -34,48 +33,43 @@ public class SFServer{
 		
 		public SwitchThread(int maxConns){
 			this.maxConns = maxConns;
+			threadPool = new long[maxConns];
+
+			for(int i=0;i< maxConns;i++){
+				threadPool[i]=0;
+			}
 		}
 		
 		public void run() {
 			if(log.isDebugEnabled()) log.debug("服务器启动");
 			
-			threadPool = new Vector<Thread>(maxConns);
-	
 			try {
 				ServerSocket sSocket = new ServerSocket(SERVICE_PORT,SERVICE_BACKLOG);
 				
 				//主线程进入轮询模式
 				boolean forever = true;
 				while (forever) {
-					
 					try {
-						if(maxConns > 0 && threadPool.size() == maxConns){
+						//计算连接数
+						int freeConns = 0;		
+						for(int i=0;i< threadPool.length;i++){
+							if (threadPool[i]==0){
+								freeConns++;
+							}
+						}
+						if(log.isDebugEnabled())log.debug("运行线程数:"+(maxConns-freeConns));
+
+						if(freeConns==0){
 //							throw new Exception("线程池满");
 							if(log.isDebugEnabled())log.debug("线程池满:");
-							if(log.isDebugEnabled())log.debug("清理线程池:");
-							for(Thread thread:threadPool){
-								threadPool.remove(thread);
-							}
-							if(log.isDebugEnabled())log.debug("清理线程池完成:");
+//							Thread.sleep(20);//wait 20ms
 						}
+						if(log.isDebugEnabled())log.debug("运行线程数:"+(maxConns-freeConns));
+
+						if(log.isDebugEnabled())log.debug("可用线程数:"+(maxConns-freeConns));
+
+						if(freeConns>0) new SessionThread(sSocket.accept());
 						
-						//计算连接数
-						int runCount = 0;
-						for (Thread threadObj : threadPool) {
-							if (threadObj.isAlive())
-								runCount++;
-						}
-						
-						if(log.isDebugEnabled())log.debug(">>>>>>>>>>>线程总数:"+ threadPool.size());
-						if(log.isDebugEnabled()) log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
-		
-						//处理客户端请求并生成子线程
-						Thread thread = new Thread(new SessionThread(sSocket.accept()));
-						thread.start();
-		//				thread.join();
-						
-//						Thread.sleep(20);//wait 20ms
-						threadPool.add(thread);
 					} catch (Exception e) {
 						if(log.isErrorEnabled()) log.error("主线程服务异常:" + e.getMessage());
 					}
@@ -95,12 +89,14 @@ public class SFServer{
 	 * 访问子线程
 	 */
 	class SessionThread implements Runnable {
+		private Thread runner;
+
 		private Socket socket;
 		private OutputStream out;
 		private InputStream in;
 
 		private BufferedReader read = null;  
-		private PrintStream print = null; 
+		private PrintStream print = null;
 		
 		public SessionThread(Socket socket) throws IOException {
 			this.socket = socket;
@@ -112,6 +108,19 @@ public class SFServer{
 
 			read = new BufferedReader(new InputStreamReader(in,"GB18030")); 
 			print = new PrintStream(out,true,"GB18030");
+			
+			// Fire up the background housekeeping thread
+
+			runner = new Thread(this);
+			
+			for(int i=0;i< threadPool.length;i++){
+				if (threadPool[i]==0){
+					threadPool[i] = runner.getId();
+					break;
+				}
+			}
+			
+			runner.start();
 		}
 
 		public void run() {
@@ -164,7 +173,12 @@ public class SFServer{
 					if(!socket.isClosed())
 						socket.close();
 					
-					threadPool.remove(this);
+					for(int i=0;i< threadPool.length;i++){
+						if (threadPool[i] == runner.getId()){
+							threadPool[i] = 0;
+							break;
+						}
+					}
 					
 					if(log.isDebugEnabled()) log.debug("服务器线程成功关闭连接");
 				} catch (IOException e) {
