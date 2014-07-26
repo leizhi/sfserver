@@ -50,7 +50,13 @@ public class SFServer{
 					
 					try {
 						if(maxConns > 0 && threadPool.size() == maxConns){
-							throw new Exception("线程池满");
+//							throw new Exception("线程池满");
+							if(log.isDebugEnabled())log.debug("线程池满:");
+							if(log.isDebugEnabled())log.debug("清理线程池:");
+							for(Thread thread:threadPool){
+								threadPool.remove(thread);
+							}
+							if(log.isDebugEnabled())log.debug("清理线程池完成:");
 						}
 						
 						//计算连接数
@@ -59,7 +65,8 @@ public class SFServer{
 							if (threadObj.isAlive())
 								runCount++;
 						}
-						if(log.isDebugEnabled())log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
+						
+						if(log.isDebugEnabled())log.debug(">>>>>>>>>>>线程总数:"+ threadPool.size());
 						if(log.isDebugEnabled()) log.debug(">>>>>>>>>>>运行线程数:"+ runCount);
 		
 						//处理客户端请求并生成子线程
