@@ -64,9 +64,8 @@ public class SFServer{
 							if(log.isDebugEnabled())log.debug("线程池满:");
 //							Thread.sleep(20);//wait 20ms
 						}
-						if(log.isDebugEnabled())log.debug("运行线程数:"+(maxConns-freeConns));
 
-						if(log.isDebugEnabled())log.debug("可用线程数:"+(maxConns-freeConns));
+						if(log.isDebugEnabled())log.debug("可用线程数:"+freeConns);
 
 						if(freeConns>0) new SessionThread(sSocket.accept());
 						
